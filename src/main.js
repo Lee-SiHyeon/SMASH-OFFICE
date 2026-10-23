@@ -94,33 +94,46 @@ function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width 
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // 8×8 창문 아틀라스: 낮(색) / 밤(발광)
-const ATLAS = 8;
-const [dayC, dayX] = makeCanvas(1024, 1024);
-const [nightC, nightX] = makeCanvas(1024, 1024);
-nightX.fillStyle = '#000'; nightX.fillRect(0, 0, 1024, 1024);
-for (let by = 0; by < ATLAS; by++) for (let bx = 0; bx < ATLAS; bx++) {
-  const x = bx * 128, y = by * 128;
-  dayX.fillStyle = '#e4e7ea'; dayX.fillRect(x, y, 128, 128); // 프레임
-  dayX.fillStyle = '#c9cdd1'; dayX.fillRect(x, y + 96, 128, 32); // 스팬드럴
-  const g = dayX.createLinearGradient(x, y, x + 60, y + 96);
-  const t = rnd(-12, 12);
-  g.addColorStop(0, `rgb(${110 + t},${140 + t},${168 + t})`);
-  g.addColorStop(0.55, `rgb(${150 + t},${178 + t},${200 + t})`);
-  g.addColorStop(1, `rgb(${95 + t},${122 + t},${150 + t})`);
-  dayX.fillStyle = g; dayX.fillRect(x + 6, y + 6, 116, 86);
-  dayX.fillStyle = '#d5d9dd'; dayX.fillRect(x + 62, y + 6, 4, 86); // 멀리언
-  const lit = Math.random();
-  if (lit < 0.55) {
-    const warm = Math.random() < 0.6;
-    const b = rnd(0.55, 1);
-    nightX.fillStyle = warm ? `rgba(255,${200 + rnd(0, 40) | 0},${130 + rnd(0, 60) | 0},${b})` : `rgba(200,225,255,${b})`;
-    nightX.fillRect(x + 6, y + 6, 116, 86);
-    nightX.fillStyle = '#000'; nightX.fillRect(x + 62, y + 6, 4, 86);
+const ATLAS = 8; // 가로 8칸 × (외벽 5종 × 2줄) — 0 유리 · 1 콘크리트 · 2 아파트 · 3 벽돌 · 4 공장
+const NSTY = 5, AROWS = NSTY * 2;
+const [dayC, dayX] = makeCanvas(1024, 128 * AROWS);
+const [nightC, nightX] = makeCanvas(1024, 128 * AROWS);
+nightX.fillStyle = '#000'; nightX.fillRect(0, 0, 1024, 128 * AROWS);
+const litWin = (x, y, w, h, p = 0.5) => { if (Math.random() < p) { const b = rnd(0.5, 1); nightX.fillStyle = Math.random() < 0.65 ? `rgba(255,${200 + rnd(0, 40) | 0},${130 + rnd(0, 60) | 0},${b})` : `rgba(200,225,255,${b})`; nightX.fillRect(x, y, w, h); } };
+function drawBay(st, x, y) {
+  const X = dayX, t = rnd(-10, 10);
+  if (st === 0) { // 유리 커튼월
+    X.fillStyle = '#e4e7ea'; X.fillRect(x, y, 128, 128); X.fillStyle = '#c9cdd1'; X.fillRect(x, y + 96, 128, 32);
+    const g = X.createLinearGradient(x, y, x + 60, y + 96); g.addColorStop(0, `rgb(${110 + t},${140 + t},${168 + t})`); g.addColorStop(0.55, `rgb(${150 + t},${178 + t},${200 + t})`); g.addColorStop(1, `rgb(${95 + t},${122 + t},${150 + t})`);
+    X.fillStyle = g; X.fillRect(x + 6, y + 6, 116, 86); X.fillStyle = '#d5d9dd'; X.fillRect(x + 62, y + 6, 4, 86);
+    litWin(x + 6, y + 6, 116, 86, 0.55);
+  } else if (st === 1) { // 콘크리트 사무동
+    X.fillStyle = `rgb(${206 + t},${202 + t},${194 + t})`; X.fillRect(x, y, 128, 128);
+    for (const wx of [14, 70]) { X.fillStyle = `rgb(${70 + t},${88 + t},${104 + t})`; X.fillRect(x + wx, y + 24, 44, 58); X.fillStyle = 'rgba(255,255,255,0.18)'; X.fillRect(x + wx, y + 24, 44, 10); X.fillStyle = '#b9b5ad'; X.fillRect(x + wx - 3, y + 82, 50, 5); litWin(x + wx, y + 24, 44, 58, 0.45); }
+  } else if (st === 2) { // 아파트 (발코니)
+    X.fillStyle = `rgb(${240 + t / 2},${238 + t / 2},${232 + t / 2})`; X.fillRect(x, y, 128, 128);
+    X.fillStyle = `rgb(${92 + t},${112 + t},${130 + t})`; X.fillRect(x + 10, y + 18, 108, 62); X.fillStyle = '#e9e9e4'; X.fillRect(x + 62, y + 18, 4, 62);
+    litWin(x + 10, y + 18, 108, 62, 0.6);
+    X.fillStyle = '#d6d6d0'; X.fillRect(x + 4, y + 80, 120, 10); X.strokeStyle = '#8d949a'; X.lineWidth = 2; X.beginPath();
+    for (let k = 0; k <= 12; k++) { X.moveTo(x + 8 + k * 9.3, y + 66); X.lineTo(x + 8 + k * 9.3, y + 80); } X.moveTo(x + 6, y + 66); X.lineTo(x + 122, y + 66); X.stroke();
+    if (Math.random() < 0.35) { X.fillStyle = '#c3c6c8'; X.fillRect(x + 92, y + 92, 22, 16); }
+  } else if (st === 3) { // 벽돌
+    X.fillStyle = `rgb(${150 + t},${78 + t / 2},${58 + t / 2})`; X.fillRect(x, y, 128, 128);
+    X.strokeStyle = 'rgba(230,210,190,0.35)'; X.lineWidth = 1.5;
+    for (let r = 0; r < 16; r++) { X.beginPath(); X.moveTo(x, y + r * 8); X.lineTo(x + 128, y + r * 8); X.stroke(); for (let c = 0; c < 8; c++) { const bx = x + c * 16 + (r % 2) * 8; X.beginPath(); X.moveTo(bx, y + r * 8); X.lineTo(bx, y + r * 8 + 8); X.stroke(); } }
+    X.fillStyle = '#efe9df'; X.fillRect(x + 34, y + 22, 60, 66); X.fillStyle = `rgb(${68 + t},${82 + t},${96 + t})`; X.fillRect(x + 40, y + 28, 48, 54); X.fillStyle = '#efe9df'; X.fillRect(x + 62, y + 28, 4, 54);
+    litWin(x + 40, y + 28, 48, 54, 0.5);
+  } else { // 공장 골함석
+    X.fillStyle = `rgb(${196 + t},${204 + t},${212 + t})`; X.fillRect(x, y, 128, 128);
+    for (let k = 0; k < 16; k++) { X.fillStyle = k % 2 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.12)'; X.fillRect(x + k * 8, y, 4, 128); }
+    if (Math.random() < 0.5) { X.fillStyle = 'rgba(70,90,110,0.85)'; X.fillRect(x, y + 10, 128, 16); litWin(x, y + 10, 128, 16, 0.25); }
+    if (Math.random() < 0.12) { X.fillStyle = '#7d8790'; X.fillRect(x + 30, y + 60, 68, 68); }
   }
 }
+for (let st = 0; st < NSTY; st++) for (let r = 0; r < 2; r++) for (let bx = 0; bx < ATLAS; bx++) drawBay(st, bx * 128, (AROWS - 1 - (st * 2 + r)) * 128);
 const dayTex = new THREE.CanvasTexture(dayC); dayTex.colorSpace = THREE.SRGBColorSpace;
 const nightTex = new THREE.CanvasTexture(nightC); nightTex.colorSpace = THREE.SRGBColorSpace;
-for (const t of [dayTex, nightTex]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; }
+for (const t of [dayTex, nightTex]) { t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; }
 
 const softDot = (() => {
   const [c, x] = makeCanvas(128, 128);
@@ -142,23 +155,23 @@ const puff = (() => {
 
 // ───────────────────────── 재질 ─────────────────────────
 let nightOn = false;
-function instancedAtlas(mat) {
+function facade(mat, instanced) {
   mat.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
-#ifdef USE_INSTANCING
-  float hid = float(gl_InstanceID);
-  vec2 aoff = floor(vec2(fract(sin(hid*12.9898)*43758.5453), fract(sin(hid*78.233)*12345.678))*${ATLAS}.0)/${ATLAS}.0;
-  #ifdef USE_MAP
-  vMapUv = vMapUv/${ATLAS}.0 + aoff;
-  #endif
-  #ifdef USE_EMISSIVEMAP
-  vEmissiveMapUv = vEmissiveMapUv/${ATLAS}.0 + aoff;
-  #endif
-#endif`);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+attribute float aStyle; varying float vStyle; varying vec2 vBay; varying float vSeed;`).replace('#include <uv_vertex>', `#include <uv_vertex>
+vStyle = aStyle; vBay = uv;
+${instanced ? 'vSeed = float(gl_InstanceID);' : 'vSeed = 0.0;'}`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying float vStyle; varying vec2 vBay; varying float vSeed;`).replace('#include <map_fragment>', `
+vec2 bCell = floor(vBay); vec2 bF = fract(vBay);
+float bH = fract(sin(dot(bCell + vSeed * vec2(1.7, 9.1), vec2(12.9898, 78.233))) * 43758.5453);
+vec2 aUv = (vec2(floor(bH * ${ATLAS}.0), floor(vStyle + 0.5) * 2.0 + floor(fract(bH * 7.13) * 2.0)) + clamp(bF, 0.004, 0.996)) / vec2(${ATLAS}.0, ${AROWS}.0);
+vec2 aDx = dFdx(vBay) / vec2(${ATLAS}.0, ${AROWS}.0), aDy = dFdy(vBay) / vec2(${ATLAS}.0, ${AROWS}.0);
+diffuseColor *= textureGrad(map, aUv, aDx, aDy);`).replace('#include <emissivemap_fragment>', `totalEmissiveRadiance *= textureGrad(emissiveMap, aUv, aDx, aDy).rgb;`);
   };
   return mat;
 }
-const wallInst = instancedAtlas(new THREE.MeshStandardMaterial({ map: dayTex, emissiveMap: nightTex, emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.42, metalness: 0.15 }));
+const wallInst = facade(new THREE.MeshStandardMaterial({ map: dayTex, emissiveMap: nightTex, emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.42, metalness: 0.15 }), true);
 const roofInst = new THREE.MeshStandardMaterial({ color: '#b3b5b6', roughness: 0.9 });
 const BOX = new THREE.BoxGeometry(1, 1, 1);
 const BLOCK_MATS = [wallInst, wallInst, roofInst, roofInst, wallInst, wallInst];
@@ -173,6 +186,20 @@ function intactMat(hex) {
   return intactMats.get(hex);
 }
 const SITE_COLORS = ['#e8eef3', '#dfe7ee', '#edf1f4', '#d6e0e8'];
+const STYLE_TINT = [['#e8eef3', '#dfe7ee', '#edf1f4', '#d6e0e8'], ['#ffffff', '#f3efe8', '#e9edf0', '#f6f2ea'], ['#ffffff', '#f6f1e6', '#eef2f5', '#fbf7ee'], ['#ffffff', '#f0e6e0', '#e8ddd6'], ['#ffffff', '#e6eef5', '#f0f0e8', '#e3ecf2']];
+function facadeStyle(src) {
+  const k = src.k || '', h = src.id >> 4;
+  if (k === 'f') return 4; if (k === 'b') return 3; if (k === 'a') return 2; if (k === 'g') return 0; if (k === 'c') return 1;
+  if (src.s) return THEME_KEY === 'hospital' || THEME_KEY === 'nk' ? 1 : (h % 4 === 0 ? 1 : 0);
+  if (k === 'o') return h % 3 === 0 ? 1 : 0;
+  if (src.lv >= 10 && src.h < 90) return h % 3 === 0 ? 1 : 2; // 한국식 고층 아파트
+  return [1, 1, 3, 0, 2][h % 5];
+}
+function buildingColor(src, style) {
+  const pal = STYLE_TINT[style];
+  if (src.c) return '#' + new THREE.Color('#ffffff').lerp(new THREE.Color(src.c), 0.6).getHexString();
+  return pal[(src.id >> 3) % pal.length];
+}
 const CITY_COLORS = ['#f0e9dc', '#e6e1d6', '#dcd8cf', '#d9dfe3', '#efe4d2', '#cfd4d8'];
 
 // ───────────────────────── 땅 (높이장) ─────────────────────────
@@ -351,17 +378,18 @@ const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
 class SlotLayer {
   constructor(cap, evict) {
     this.cap = cap; this.evict = evict;
-    const m = new THREE.InstancedMesh(BOX, BLOCK_MATS, cap);
+    const geo = BOX.clone(); this.styA = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1).setUsage(THREE.DynamicDrawUsage); geo.setAttribute('aStyle', this.styA);
+    const m = new THREE.InstancedMesh(geo, BLOCK_MATS, cap);
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage);
     m.count = 0; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true;
-    this.mesh = m;
+    this.mesh = m; this.sty = this.styA.array;
     this.pos = new Float32Array(cap * 3); this.size = new Float32Array(cap * 3); this.quat = new Float32Array(cap * 4); this.col = new Float32Array(cap * 3);
     this.alive = new Uint8Array(cap); this.owner = new Int32Array(cap).fill(-1); this.cell = new Int32Array(cap);
     this.free = []; this.high = 0; this.lo = Infinity; this.hi = -1; this.ring = 0; this.live = 0;
     world.add(m);
   }
-  add(x, y, z, sx, sy, sz, q, r, g, b) {
+  add(x, y, z, sx, sy, sz, q, r, g, b, st = 0) {
     let s = this.free.pop();
     if (s === undefined) {
       if (this.high < this.cap) s = this.high++;
@@ -370,7 +398,7 @@ class SlotLayer {
     }
     this.pos.set([x, y, z], s * 3); this.size.set([sx, sy, sz], s * 3); this.quat.set([q.x, q.y, q.z, q.w], s * 4); this.col.set([r, g, b], s * 3);
     this.alive[s] = 1; this.live++;
-    this.mesh.instanceColor.array.set([r, g, b], s * 3);
+    this.mesh.instanceColor.array.set([r, g, b], s * 3); this.sty[s] = st;
     this.write(s);
     if (this.mesh.count < this.high) this.mesh.count = this.high;
     return s;
@@ -392,6 +420,7 @@ class SlotLayer {
     const im = this.mesh.instanceMatrix, ic = this.mesh.instanceColor;
     im.clearUpdateRanges(); im.addUpdateRange(this.lo * 16, (this.hi - this.lo + 1) * 16); im.needsUpdate = true;
     ic.clearUpdateRanges(); ic.addUpdateRange(this.lo * 3, (this.hi - this.lo + 1) * 3); ic.needsUpdate = true;
+    this.styA.clearUpdateRanges(); this.styA.addUpdateRange(this.lo, this.hi - this.lo + 1); this.styA.needsUpdate = true;
     this.lo = Infinity; this.hi = -1;
   }
 }
@@ -426,7 +455,7 @@ function resettle(x, z, r) {
     const fl = floorAt(px, pz);
     if (py - half * 0.8 > fl + 1.2 && debris.n < debris.cap - 20) {
       _q.fromArray(L.quat, s * 4);
-      debris.spawn(px, py, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], 0, 0, 0, 0.3);
+      debris.spawn(px, py, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], 0, 0, 0, 0.3, 0, L.sty[s]);
       L.remove(s);
     } else pile.raise(px, pz, Math.max(L.size[s * 3], L.size[s * 3 + 2]) * 0.35, py + half * 0.6 - groundH(px, pz));
   }
@@ -445,7 +474,7 @@ const rubble = {
       _q.fromArray(L.quat, s * 4);
       const dx = px - cx, dz = pz - cz, dl = Math.hypot(dx, dz) || 1, f = power * (1 - d / r);
       debris.spawn(px, L.pos[s * 3 + 1] + 0.3, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q,
-        L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], dx / dl * f, f * 0.8 + rnd(0, 2), dz / dl * f, f * 0.05);
+        L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], dx / dl * f, f * 0.8 + rnd(0, 2), dz / dl * f, f * 0.05, 0, L.sty[s]);
       L.remove(s); n++;
     }
     if (n) resettle(x, z, r + 6);
@@ -457,7 +486,8 @@ const rubble = {
 const _wq = new THREE.Quaternion(), _dq = new THREE.Quaternion();
 const debris = (() => {
   const cap = IS_MOBILE ? 4000 : 5000;
-  const m = new THREE.InstancedMesh(BOX, BLOCK_MATS, cap);
+  const dgeo = BOX.clone(); const STA = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1).setUsage(THREE.DynamicDrawUsage); dgeo.setAttribute('aStyle', STA); const STY = STA.array;
+  const m = new THREE.InstancedMesh(dgeo, BLOCK_MATS, cap);
   m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage);
   m.count = 0; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true;
@@ -466,13 +496,13 @@ const debris = (() => {
   const SZ = new Float32Array(cap * 3), C = new Float32Array(cap * 3), REST = new Float32Array(cap), TAG = new Int32Array(cap), OX = new Float32Array(cap * 2), AGE = new Float32Array(cap);
   const d = {
     cap, n: 0, mesh: m,
-    spawn(x, y, z, sx, sy, sz, q, r, g, b, vx, vy, vz, spin = 1, tag = 0) {
+    spawn(x, y, z, sx, sy, sz, q, r, g, b, vx, vy, vz, spin = 1, tag = 0, st = 0) {
       if (d.n >= cap) return -1;
       const i = d.n++;
       P.set([x, y, z], i * 3); V.set([vx, vy, vz], i * 3); Q.set([q.x, q.y, q.z, q.w], i * 4);
       W.set([rnd(-1, 1) * spin, rnd(-1, 1) * spin, rnd(-1, 1) * spin], i * 3);
       SZ.set([sx, sy, sz], i * 3); C.set([r, g, b], i * 3); REST[i] = 0; TAG[i] = tag; OX[i * 2] = x; OX[i * 2 + 1] = z; AGE[i] = 0;
-      m.instanceColor.array.set([r, g, b], i * 3);
+      m.instanceColor.array.set([r, g, b], i * 3); STY[i] = st;
       return i;
     },
     kill(i) {
@@ -480,7 +510,7 @@ const debris = (() => {
       if (i !== j) {
         P.copyWithin(i * 3, j * 3, j * 3 + 3); V.copyWithin(i * 3, j * 3, j * 3 + 3); Q.copyWithin(i * 4, j * 4, j * 4 + 4);
         W.copyWithin(i * 3, j * 3, j * 3 + 3); SZ.copyWithin(i * 3, j * 3, j * 3 + 3); C.copyWithin(i * 3, j * 3, j * 3 + 3);
-        REST[i] = REST[j]; TAG[i] = TAG[j]; OX[i * 2] = OX[j * 2]; OX[i * 2 + 1] = OX[j * 2 + 1]; AGE[i] = AGE[j];
+        REST[i] = REST[j]; TAG[i] = TAG[j]; STY[i] = STY[j]; OX[i * 2] = OX[j * 2]; OX[i * 2 + 1] = OX[j * 2 + 1]; AGE[i] = AGE[j];
         m.instanceColor.array.copyWithin(i * 3, j * 3, j * 3 + 3);
       }
     },
@@ -522,7 +552,7 @@ const debris = (() => {
         if (P[i3 + 1] < -MAXD - 50 || AGE[i] > 40) { d.kill(i); i--; continue; }
         if (REST[i] > 0.35) { // 내려앉음 → 잔해
           q.fromArray(Q, i * 4);
-          const rs = rubbleL.add(P[i3], P[i3 + 1], P[i3 + 2], SZ[i3], SZ[i3 + 1], SZ[i3 + 2], q, C[i3], C[i3 + 1], C[i3 + 2]);
+          const rs = rubbleL.add(P[i3], P[i3 + 1], P[i3 + 2], SZ[i3], SZ[i3 + 1], SZ[i3 + 2], q, C[i3], C[i3 + 1], C[i3 + 2], STY[i]);
           rubIdx.add(rs, P[i3], P[i3 + 2]);
           pile.raise(P[i3], P[i3 + 2], Math.max(SZ[i3], SZ[i3 + 2]) * 0.35, P[i3 + 1] + half * 0.6 - groundH(P[i3], P[i3 + 2]));
           if (TAG[i] > 0) batLanded(TAG[i], Math.hypot(P[i3] - OX[i * 2], P[i3 + 2] - OX[i * 2 + 1]), P[i3], P[i3 + 1], P[i3 + 2]);
@@ -537,6 +567,7 @@ const debris = (() => {
       m.count = d.n;
       m.instanceMatrix.clearUpdateRanges(); m.instanceMatrix.addUpdateRange(0, Math.max(1, d.n) * 16); m.instanceMatrix.needsUpdate = true;
       m.instanceColor.clearUpdateRanges(); m.instanceColor.addUpdateRange(0, Math.max(1, d.n) * 3); m.instanceColor.needsUpdate = true;
+      STA.clearUpdateRanges(); STA.addUpdateRange(0, Math.max(1, d.n)); STA.needsUpdate = true;
     },
   };
   return d;
@@ -588,13 +619,13 @@ const trees = (() => {
 const buildings = [];
 const intactGroup = new THREE.Group(); world.add(intactGroup);
 // 구역(250 m)마다 벽·지붕을 한 덩어리로 합침. 건물이 부서지면 그 건물 꼭짓점만 한 점으로 접어서 숨김
-const wallMerged = new THREE.MeshStandardMaterial({ map: dayTex, emissiveMap: nightTex, emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.42, metalness: 0.15, vertexColors: true });
+const wallMerged = facade(new THREE.MeshStandardMaterial({ map: dayTex, emissiveMap: nightTex, emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.42, metalness: 0.15, vertexColors: true }), false);
 const roofMerged = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: true });
 const chunks = new Map();
-function mergeAdd(geo, hex, site, bi, p) {
+function mergeAdd(geo, hex, site, bi, p, style) {
   const cx = p.reduce((a, v) => a + v[0], 0) / p.length, cz = p.reduce((a, v) => a + v[1], 0) / p.length;
   const key = `${Math.floor(cx / 250)},${Math.floor(cz / 250)}`;
-  if (!chunks.has(key)) chunks.set(key, { wall: { pos: [], nor: [], uv: [], col: [], owners: [] }, roof: { pos: [], nor: [], uv: [], col: [], owners: [] } });
+  if (!chunks.has(key)) chunks.set(key, { wall: { pos: [], nor: [], uv: [], col: [], sty: [], owners: [] }, roof: { pos: [], nor: [], uv: [], col: [], sty: [], owners: [] } });
   const ch = chunks.get(key), col = new THREE.Color(hex), rc = col.clone().multiplyScalar(0.78);
   const P = geo.attributes.position.array, N = geo.attributes.normal.array, U = geo.attributes.uv.array;
   const ref = { key, ranges: [] };
@@ -602,7 +633,7 @@ function mergeAdd(geo, hex, site, bi, p) {
     const t = g.materialIndex === 1 ? ch.wall : ch.roof, c = g.materialIndex === 1 ? col : rc;
     const start = t.pos.length / 3;
     for (let v = g.start; v < g.start + g.count; v++) {
-      t.pos.push(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); t.nor.push(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]); t.uv.push(U[v * 2], U[v * 2 + 1]); t.col.push(c.r, c.g, c.b);
+      t.pos.push(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); t.nor.push(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]); t.uv.push(U[v * 2], U[v * 2 + 1]); t.col.push(c.r, c.g, c.b); t.sty.push(style);
     }
     t.owners.push([start, bi]);
     ref.ranges.push([g.materialIndex === 1 ? 'wall' : 'roof', start, g.count]);
@@ -618,10 +649,11 @@ function buildChunks() {
       g.setAttribute('normal', new THREE.Float32BufferAttribute(t.nor, 3));
       g.setAttribute('uv', new THREE.Float32BufferAttribute(t.uv, 2));
       g.setAttribute('color', new THREE.Float32BufferAttribute(t.col, 3));
+      g.setAttribute('aStyle', new THREE.Float32BufferAttribute(t.sty, 1));
       g.computeBoundingSphere(); g.computeBoundingBox();
       const m = new THREE.Mesh(g, kind === 'wall' ? wallMerged : roofMerged);
       m.castShadow = true; m.receiveShadow = true; m.userData.owners = t.owners;
-      intactGroup.add(m); ch[kind + 'Mesh'] = m; t.pos = t.nor = t.uv = t.col = null;
+      intactGroup.add(m); ch[kind + 'Mesh'] = m; t.pos = t.nor = t.uv = t.col = t.sty = null;
     }
   }
 }
@@ -655,19 +687,19 @@ SCENE.buildings.forEach((src, bi) => {
   for (let a = 0; a < nx; a++) for (let c = 0; c < nz; c++) if (polyInside(u0 + (a + 0.5) * cell, w0 + (c + 0.5) * cell, loc)) cellsIn.push(a * nz + c);
   if (!cellsIn.length) cellsIn.push(((nx / 2) | 0) * nz + ((nz / 2) | 0));
   const ny = nyV, fh = src.h / ny;
-  const palette = src.s ? SITE_COLORS : CITY_COLORS;
-  const color = palette[(src.id >> 3) % palette.length];
+  const style = facadeStyle(src);
+  const color = buildingColor(src, style);
   // 통짜 메시
   const shape = new THREE.Shape(p.map(([x, z]) => new THREE.Vector2(x, -z)));
   const geo = new THREE.ExtrudeGeometry(shape, { depth: src.h, bevelEnabled: false });
   geo.rotateX(-Math.PI / 2);
   const uv = geo.attributes.uv; const g1 = geo.groups.find((g) => g.materialIndex === 1);
-  if (g1) for (let i = g1.start; i < g1.start + g1.count; i++) { const v = geo.index ? geo.index.getX(i) : i; uv.setXY(v, uv.getX(v) / (cell * ATLAS), uv.getY(v) / (fh * ATLAS)); }
-  const mesh = mergeAdd(geo, color, src.s, bi, p);
+  if (g1) for (let i = g1.start; i < g1.start + g1.count; i++) { const v = geo.index ? geo.index.getX(i) : i; uv.setXY(v, uv.getX(v) / cell, uv.getY(v) / fh); }
+  const mesh = mergeAdd(geo, color, src.s, bi, p, style);
   geo.dispose();
   const xs = p.map((v) => v[0]), zs = p.map((v) => v[1]);
   buildings.push({
-    i: bi, id: src.id, name: src.n, site: !!src.s, h: src.h, poly: p, mesh, color: new THREE.Color(color),
+    i: bi, id: src.id, name: src.n, site: !!src.s, h: src.h, poly: p, mesh, color: new THREE.Color(color), style,
     cs, sn, u0, w0, cell, nx, nz, ny, fh, cellsIn, vol: cellsIn.length * ny,
     bbox: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)],
     cx: xs.reduce((a, b) => a + b, 0) / xs.length, cz: zs.reduce((a, b) => a + b, 0) / zs.length,
@@ -676,6 +708,65 @@ SCENE.buildings.forEach((src, bi) => {
   });
 });
 buildChunks();
+
+// ───────────────────────── 옥상: 회사 간판 · 설비 ─────────────────────────
+const roofMat = new THREE.MeshStandardMaterial({ color: '#9aa1a8', roughness: 0.8, metalness: 0.2 });
+const roofUnits = (() => {
+  const list = [];
+  for (const b of buildings) {
+    if (b.h < 18) continue;
+    const n = Math.min(6, 1 + Math.floor(b.vol / 120));
+    for (let k = 0; k < n * 3 && list.filter((u) => u.b === b).length < n; k++) {
+      const x = rnd(b.bbox[0], b.bbox[1]), z = rnd(b.bbox[2], b.bbox[3]);
+      if (!polyInside(x, z, b.poly)) continue;
+      list.push({ b, x, z, sx: rnd(2.5, 6), sy: rnd(1.5, 3.5), sz: rnd(2.5, 6) });
+    }
+  }
+  const m = new THREE.InstancedMesh(BOX, roofMat, Math.max(1, list.length));
+  list.forEach((u, i) => { _m.compose(_p.set(u.x, u.b.h + u.sy / 2, u.z), u.b.quat, _s.set(u.sx, u.sy, u.sz)); m.setMatrixAt(i, _m); (u.b.roofIdx ||= []).push(i); });
+  m.count = list.length; m.castShadow = true; m.receiveShadow = true; world.add(m);
+  return m;
+})();
+function clearRoof(b) {
+  if (b.roofIdx) { for (const i of b.roofIdx) roofUnits.setMatrixAt(i, ZERO); roofUnits.instanceMatrix.needsUpdate = true; b.roofIdx = null; }
+  if (b.sign) dropSign(b);
+}
+const signs = [];
+function signTexture(text) {
+  const [c, x] = makeCanvas(1024, 256);
+  x.fillStyle = '#0f172a'; x.fillRect(0, 0, 1024, 256);
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  let fs = 170; x.font = `900 ${fs}px ${getComputedStyle(document.body).fontFamily}`;
+  while (x.measureText(text).width > 960 && fs > 40) { fs -= 8; x.font = `900 ${fs}px ${getComputedStyle(document.body).fontFamily}`; }
+  x.fillText(text, 512, 136);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+(() => {
+  const site = buildings.filter((b) => b.site).sort((a, b) => b.h - a.h);
+  const text = CFG.sign || CFG.company;
+  const tex = signTexture(text);
+  const mat = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: '#ffffff', emissiveIntensity: 0.35, roughness: 0.6 });
+  const back = new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 });
+  for (const b of site.slice(0, site.length > 6 ? 2 : 1)) {
+    const len = Math.max(b.nx, b.nz) * b.cell;
+    const W = Math.max(24, Math.min(len * 0.85, 80)), H = W / 4;
+    const g = new THREE.Group();
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat); front.position.set(0, H / 2 + 3, 0.6);
+    const rear = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat); rear.position.set(0, H / 2 + 3, -0.6); rear.rotation.y = Math.PI;
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(W + 1, H + 1, 1), back); frame.position.y = H / 2 + 3;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(W * 0.9, 3, 1.2), roofMat); post.position.y = 1.5;
+    g.add(frame, front, rear, post);
+    g.position.set(b.cx, b.h, b.cz);
+    g.rotation.y = Math.atan2(camera.position.x - b.cx, camera.position.z - b.cz); // 처음 카메라 쪽을 봄
+    const board = frame;
+    board.castShadow = true; world.add(g); b.sign = g; b.signH = H + 6; signs.push({ b, g, mat });
+  }
+})();
+function dropSign(b) {
+  const g = b.sign; b.sign = null; world.remove(g);
+  const P = g.position;
+  for (let k = 0; k < 4; k++) debris.spawn(P.x + rnd(-8, 8), P.y + 6, P.z + rnd(-8, 8), rnd(6, 12), rnd(3, 6), 0.8, g.quaternion, 0.1, 0.12, 0.18, rnd(-10, 10), rnd(5, 15), rnd(-10, 10), 2);
+}
 const SITE_VOL = buildings.filter((b) => b.site).reduce((a, b) => a + b.vol, 0);
 const SITE_COUNT = buildings.filter((b) => b.site).length;
 
@@ -717,13 +808,13 @@ function voxelize(b) {
     for (let y = 0; y < b.ny; y++) {
       blockWorld(b, a, y, c, _p);
       const sh = 0.9 + 0.1 * Math.random();
-      const s = blocks.add(_p.x, _p.y, _p.z, b.cell, b.fh, b.cell, b.quat, r * sh, g * sh, bl * sh);
+      const s = blocks.add(_p.x, _p.y, _p.z, b.cell, b.fh, b.cell, b.quat, r * sh, g * sh, bl * sh, b.style);
       blocks.owner[s] = b.i; blocks.cell[s] = (a * b.ny + y) * b.nz + c;
       vox[(a * b.ny + y) * b.nz + c] = s; made++;
     }
   }
   b.vox = vox; b.alive = made;
-  hideIntact(b);
+  hideIntact(b); clearRoof(b);
   return vox;
 }
 const vIdx = (b, a, y, c) => (a * b.ny + y) * b.nz + c;
@@ -734,7 +825,7 @@ function removeBlock(b, idx, mode, vx = 0, vy = 0, vz = 0, tag = 0) {
   const s = b.vox[idx]; if (s < 0) return;
   const L = blocks, x = L.pos[s * 3], y = L.pos[s * 3 + 1], z = L.pos[s * 3 + 2];
   if (mode === 'debris') {
-    debris.spawn(x, y, z, L.size[s * 3] * 0.94, L.size[s * 3 + 1] * 0.94, L.size[s * 3 + 2] * 0.94, b.quat, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], vx, vy, vz, Math.min(3, 0.4 + Math.hypot(vx, vy, vz) * 0.05), tag);
+    debris.spawn(x, y, z, L.size[s * 3] * 0.94, L.size[s * 3 + 1] * 0.94, L.size[s * 3 + 2] * 0.94, b.quat, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], vx, vy, vz, Math.min(3, 0.4 + Math.hypot(vx, vy, vz) * 0.05), tag, b.style);
   } else if (mode === 'vapor') {
     fire.spawn(x, y, z, rnd(-3, 3), rnd(2, 8), rnd(-3, 3), rnd(5, 9), 0.5, [1, 0.8, 0.4], [1, 0.25, 0.05]);
   }
@@ -835,7 +926,7 @@ function dropLoose({ b, loose }) {
       blocks.remove(s); b.vox[idx] = -1; b.alive--; if (b.site) destroyedSite++;
     }
     const n = g.length, ext = Math.cbrt(n);
-    debris.spawn(sx / n, sy / n, sz / n, b.cell * Math.min(m, ext * 1.1), b.fh * Math.min(Math.min(m, 2), ext), b.cell * Math.min(m, ext * 1.1), b.quat, cr / n, cg / n, cb / n, rnd(-2, 2), rnd(-3, 0), rnd(-2, 2), 0.35);
+    debris.spawn(sx / n, sy / n, sz / n, b.cell * Math.min(m, ext * 1.1), b.fh * Math.min(Math.min(m, 2), ext), b.cell * Math.min(m, ext * 1.1), b.quat, cr / n, cg / n, cb / n, rnd(-2, 2), rnd(-3, 0), rnd(-2, 2), 0.35, 0, b.style);
     if (k++ % 5 === 0) smoke.spawn(sx / n, sy / n, sz / n, rnd(-2, 2), rnd(0, 2), rnd(-2, 2), rnd(10, 18), 4, [0.72, 0.7, 0.66], [0.55, 0.54, 0.52], 0.45);
     pts(10 * n, sx / n, sy / n, sz / n, true);
   }
@@ -872,11 +963,12 @@ function obliterate(b, cx, cz, R, budget, gentle = false) {
     }
     const dx = x - cx, dz = z - cz, d = Math.hypot(dx, dz) || 1, f = (1 - Math.min(1, d / R)) * 170 + 30;
     const sz = b.cell * rnd(1, 1.8) * (gentle ? 1.4 : 1);
-    if (gentle) debris.spawn(x, y, z, sz, b.fh * rnd(0.9, 1.5), sz, b.quat, col.r, col.g, col.b, rnd(-3, 3), rnd(-4, 0), rnd(-3, 3), 0.5);
-    else debris.spawn(x, y, z, sz, b.fh * rnd(0.8, 1.4), sz, b.quat, col.r, col.g, col.b, dx / d * f, rnd(25, 70), dz / d * f, 3);
+    if (gentle) debris.spawn(x, y, z, sz, b.fh * rnd(0.9, 1.5), sz, b.quat, col.r, col.g, col.b, rnd(-3, 3), rnd(-4, 0), rnd(-3, 3), 0.5, 0, b.style);
+    else debris.spawn(x, y, z, sz, b.fh * rnd(0.8, 1.4), sz, b.quat, col.r, col.g, col.b, dx / d * f, rnd(25, 70), dz / d * f, 3, 0, b.style);
   }
   if (b.vox) { for (let i = 0; i < b.vox.length; i++) if (b.vox[i] >= 0) { blocks.remove(b.vox[i]); b.vox[i] = -1; } }
   else hideIntact(b);
+  clearRoof(b);
   if (b.site) destroyedSite += b.alive;
   pts(10 * b.alive, b.cx, b.h / 2, b.cz, true);
   if (gentle) for (let i = 0; i < 14 * FXK; i++) smoke.spawn(b.cx + rnd(-20, 20), rnd(2, b.h * 0.6), b.cz + rnd(-20, 20), rnd(-4, 4), rnd(1, 5), rnd(-4, 4), rnd(18, 34), 5, [0.75, 0.72, 0.68], [0.6, 0.58, 0.56], 0.55, 1.5);
@@ -1060,7 +1152,7 @@ function explode(x, y, z, R, power, opt = {}) {
 }
 
 // ───────────────────────── 도구 ─────────────────────────
-const LABELS = T('labels');
+const LABELS = Object.fromEntries(['bomb', 'bat', 'laser', 'meteor', 'quake', 'nuke'].map((k) => [k, T(`labels.${k}`)])); // 테마가 일부만 바꿔도 나머지는 기본 대사
 const pick1 = (a) => a[(Math.random() * a.length) | 0];
 
 const envTex = (() => {
@@ -1363,6 +1455,7 @@ function setNight(on) {
   hemi.intensity = on ? 0.18 : 1.1; sun.intensity = on ? 0.12 : 2.6; sun.color.set(on ? '#9fb4ff' : '#fff3e0');
   wallInst.emissiveIntensity = on ? 1.6 : 0;
   wallMerged.emissiveIntensity = on ? 1.6 : 0;
+  for (const sg of signs) sg.mat.emissiveIntensity = on ? 1.6 : 0.25;
   stars.visible = on; $('nightBtn').classList.toggle('on', on);
 }
 
@@ -1529,7 +1622,7 @@ function openRank() { $('rankModal').hidden = false; $('rankTitle').textContent 
 // ───────────────────────── 동 이름표 ─────────────────────────
 let labelsOn = true;
 const labels = buildings.filter((b) => b.site && b.name).map((b) => {
-  const el = document.createElement('div'); el.className = 'blabel'; el.textContent = b.name;
+  const el = document.createElement('div'); el.className = 'blabel'; el.textContent = b.name; el.style.display = 'none';
   $('labels').appendChild(el); return { b, el, on: false };
 });
 const _lp = new THREE.Vector3(), occ = new Set();
@@ -1541,7 +1634,7 @@ function updateLabels() {
   for (const L of labels) {
     const b = L.b; let show = labelsOn && !far && !b.gone && !b.collapsed;
     if (show) {
-      _lp.set(b.cx, b.h * (b.vox ? Math.max(0.15, b.alive / b.vol) : 1) + 4, b.cz).project(camera);
+      _lp.set(b.cx, b.h * (b.vox ? Math.max(0.15, b.alive / b.vol) : 1) + 4 + (b.sign ? b.signH : 0), b.cz).project(camera);
       show = _lp.z < 1 && Math.abs(_lp.x) < 1.05 && Math.abs(_lp.y) < 1.05;
       if (show) vis.push([L, (_lp.x * 0.5 + 0.5) * W, (-_lp.y * 0.5 + 0.5) * H, _lp.z]);
     }
@@ -1675,6 +1768,7 @@ function frame(now) {
 
 // ───────────────────────── 시작 ─────────────────────────
 ['score', 'rank', 'bar', 'mult', 'rate', 'cnt', 'depth'].forEach((k) => (hudEls[k] = $(`h-${k}`)));
+hud();
 document.title = `${T('smash', CFG.company)} | ${CFG.series}`;
 $('title').textContent = T('smash', CFG.company);
 $('series').textContent = CFG.series;

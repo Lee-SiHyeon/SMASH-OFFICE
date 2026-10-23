@@ -95,6 +95,6 @@ export const THEMES = {
 // 회사 그룹 → 테마
 export const GROUP_THEME = {
   '병원': 'hospital', '로펌': 'law', '회계·세무': 'accounting', '방송': 'broadcast', '통신': 'telecom', '패션': 'fashion',
-  'SK': 'fab', '현대': 'auto', 'IT': 'it', '북한': 'nk',
+  'SK': 'fab', '현대': 'auto', '자동차': 'auto', 'IT': 'it', '북한': 'nk',
   'AI': 'ai', 'Big Tech': 'big tech', 'Tech': 'big tech', 'Finance': 'finance', 'Auto': 'auto', 'Space': 'space', 'Aero': 'space', 'Media': 'media', 'Pharma': 'pharma',
 };

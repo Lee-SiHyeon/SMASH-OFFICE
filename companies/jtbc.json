@@ -18,5 +18,6 @@
  "alias": "JTBC 제이티비씨 중앙일보 중앙그룹 상암 DMC 방송국",
  "rename": {
   "DMCC빌딩": "JTBC·중앙일보 빌딩"
- }
+ },
+ "sign": "JTBC"
 }

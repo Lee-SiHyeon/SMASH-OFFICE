@@ -21,6 +21,8 @@ codes = sys.argv[1:] or sorted(p.stem for p in (root / 'companies').glob('*.json
 for code in codes:
     if not (root / f'data/{code}.json').exists(): continue  # 데이터 준비 전
     cfg = json.loads((root / f'companies/{code}.json').read_text())
+    import re as _r
+    cfg.setdefault('sign', _r.sub(r'\s*(본관|본사|사옥|캠퍼스|R&D캠퍼스|HQ|Headquarters|Campus|本社|总部|大厦|园区|基地|Tower|빌딩|센터|뉴스퀘어|방송센터|디지털시티|사이언스파크)$', '', cfg['company']).strip() or cfg['company'])
     lang = cfg.setdefault('lang', 'ko'); region = cfg.get('region', 'kr')
     cfg['hub'] = '../' if region == 'kr' else f'../{region}/'
     cfg.setdefault('antipode', {'ko': '우루과이 앞바다(남대서양)', 'en': 'the other side of the planet', 'ja': '地球の裏側', 'zh': '地球另一端', 'vi': 'bên kia Trái Đất'}[lang])

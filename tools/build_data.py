@@ -97,6 +97,24 @@ def num(v):
     try: return float(str(v).replace('m', '').strip())
     except (TypeError, ValueError): return None
 
+import re as _re
+NAMED = {'white': '#f2f2ee', 'grey': '#9a9a9a', 'gray': '#9a9a9a', 'red': '#b5523b', 'brown': '#8a5a3c', 'beige': '#d9cbb0', 'yellow': '#e3c565', 'blue': '#6d8fb3', 'black': '#3a3a3a', 'silver': '#c7ccd1', 'green': '#6f9a6a', 'orange': '#d88a45', 'tan': '#c8ab84', 'cream': '#ede3c8', 'pink': '#e6a8b0', 'maroon': '#7a2e2e', 'darkgray': '#666666', 'lightgrey': '#cfcfcf', 'lightgray': '#cfcfcf'}
+def colour(v):
+    if not v: return None
+    v = v.strip().lower()
+    if _re.fullmatch(r'#[0-9a-f]{6}', v): return v
+    if _re.fullmatch(r'#[0-9a-f]{3}', v): return '#' + ''.join(c * 2 for c in v[1:])
+    return NAMED.get(v)
+def kind_of(t):
+    b = t.get('building', ''); m = t.get('building:material', '') + t.get('building:facade:material', '')
+    if b in ('industrial', 'factory', 'warehouse', 'manufacture', 'hangar', 'storage_tank', 'shed', 'service'): return 'f'
+    if 'brick' in m: return 'b'
+    if 'glass' in m: return 'g'
+    if b in ('apartments', 'residential', 'house', 'dormitory', 'terrace', 'detached'): return 'a'
+    if b in ('school', 'university', 'church', 'college', 'kindergarten'): return 'b'
+    if b in ('hospital', 'government', 'public', 'civic'): return 'c'
+    if b in ('office', 'commercial', 'retail', 'hotel'): return 'o'
+    return ''
 buildings = []
 seen_cent = {}
 for bid, t, r in cands:
@@ -119,7 +137,7 @@ for bid, t, r in cands:
         continue
     seen_cent[k] = 1
     nm = t.get('name', '') or t.get('name:ko', ''); nm = cfg.get('rename', {}).get(nm, nm)
-    buildings.append({'id': bid, 'n': nm, 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a), 'x': explicit})
+    buildings.append({'id': bid, 'n': nm, 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a), 'x': explicit, 'k': kind_of(t), **({'c': col} if (col := colour(t.get('building:colour'))) else {})})
 
 # 다른 건물 중심을 품은 외곽선(캠퍼스 윤곽) 제거
 cs = [cen(b['p']) for b in buildings]

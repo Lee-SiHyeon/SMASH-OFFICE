@@ -8,6 +8,7 @@ REG = {
   'jp': {'lang': 'ja', 'path': 'jp/', 'base': '../', 'center': [36, 137.5], 'og': 'nintendo', 'label': '🇯🇵 日本'},
   'cn': {'lang': 'zh', 'path': 'cn/', 'base': '../', 'center': [31, 114], 'og': 'tencent', 'label': '🇨🇳 中国'},
   'eu': {'lang': 'en', 'path': 'eu/', 'base': '../', 'center': [50, 8], 'og': 'sap', 'label': '🇪🇺 Europe', 'h1': 'Which European office will you wreck?'},
+  'in': {'lang': 'en', 'path': 'in/', 'base': '../', 'center': [22, 79], 'og': 'samsung-india', 'label': '🇮🇳 India', 'h1': 'Which Indian office will you wreck?'},
   'vn': {'lang': 'vi', 'path': 'vn/', 'base': '../', 'center': [16, 106.5], 'og': 'vn-landmark81', 'label': '🇻🇳 Việt Nam'},
 }
 HS = {

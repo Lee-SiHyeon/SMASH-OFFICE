@@ -1,0 +1,21 @@
+{
+ "code": "in-samsung-blr",
+ "region": "in",
+ "lang": "en",
+ "group": "Electronics",
+ "company": "Samsung R&D Institute Bangalore",
+ "place": "Bengaluru",
+ "site": [
+  [
+   "way",
+   1065147884
+  ]
+ ],
+ "tagline": "Standup at 9, Korea sync at 11 PM",
+ "series": "Office Smash",
+ "alias": "samsung r&d institute india bangalore bengaluru sri-b bagmane",
+ "sign": "SAMSUNG",
+ "rename": {
+  "Bagmane Phoenix": "Samsung R&D Institute"
+ }
+}
