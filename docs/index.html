@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>회사 부수기 — 정신나간 직장인의 회사 부수기</title>
-<meta name="description" content="지도에서 회사를 골라 3D로 부수는 스트레스 해소 게임. LG, 삼성, SK하이닉스, 현대차, 판교, 네이버, 보라매병원.">
+<title>회사 부수기 — 지도에서 회사를 골라 부수세요</title>
+<meta name="description" content="정신나간 직장인의 회사 부수기. 실제 건물 배치로 사직서 폭탄부터 퇴사 핵폭탄까지.">
 <meta property="og:title" content="회사 부수기 — 지도에서 회사를 골라 부수세요">
-<meta property="og:description" content="정신나간 직장인의 회사 부수기. 사직서 폭탄부터 퇴사 핵폭탄까지">
+<meta property="og:description" content="정신나간 직장인의 회사 부수기. 실제 건물 배치로 사직서 폭탄부터 퇴사 핵폭탄까지.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE/">
 <meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE/lgsp/og.png">
@@ -36,6 +36,7 @@ h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 .card .t{flex:1;min-width:0}
 .card b{display:block;font-size:15px}
 .card span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#regions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.rg{font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.rg.on{color:#111;background:var(--fg);border-color:var(--fg)}
 #tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
 #rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
 .rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
@@ -70,34 +71,39 @@ footer a{color:#ffb38f}
 <div id="app">
   <aside id="side">
     <header>
-      <div class="series">정신나간 직장인의 회사 부수기</div>
-      <h1>어느 회사를 부술까?</h1>
-      <div class="sub">지도에서 회사를 고르세요. 실제 건물 배치(OpenStreetMap)를 3D로 부숩니다. 사직서 폭탄부터 퇴사 핵폭탄까지.</div>
+      <div id="regions"></div>
+      <div class="series" data-h="series"></div>
+      <h1 data-h="h1"></h1>
+      <div class="sub" data-h="sub"></div>
     </header>
-    <div id="tabs"><button class="tab on" data-t="list">회사 고르기</button><button class="tab" data-t="rank">랭킹</button></div>
-    <div id="searchWrap"><input id="search" type="search" placeholder="회사·지역 검색 (예: 하이닉스, 판교, 삼성)" autocomplete="off"></div>
+    <div id="tabs"><button class="tab on" data-t="list" data-h="tabList"></button><button class="tab" data-t="rank" data-h="tabRank"></button></div>
+    <div id="searchWrap"><input id="search" type="search" data-h="searchPh" data-attr="placeholder" autocomplete="off"></div>
     <div id="chips"></div>
     <div id="list"></div>
-    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today">오늘</button><button class="rt" data-p="total">전체</button></div><div id="rankBody"></div></div>
-    <footer>회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자<br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues">우리 회사도 넣어 줘 →</a></footer>
+    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
+    <footer><span data-h="foot"></span><br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues" data-h="request"></a></footer>
   </aside>
   <div id="map"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const ITEMS = [{"code": "lgd-paju", "group": "LG", "name": "LG디스플레이 파주", "place": "파주", "tag": "패널보다 먼저 내 멘탈이 깨졌다", "lat": 37.81004, "lon": 126.76831, "n": 25, "alias": "LG 엘지 디스플레이 파주 LGD"}, {"code": "lgsp", "group": "LG", "name": "LG사이언스파크", "place": "마곡", "tag": "월요일 아침, 회사를 부숴 버렸다", "lat": 37.56281, "lon": 126.83145, "n": 27, "alias": "LG 엘지 마곡 사이언스파크 LG전자 LG화학"}, {"code": "lg-twin", "group": "LG", "name": "LG트윈타워", "place": "여의도", "tag": "쌍둥이 빌딩, 둘 다 퇴근시켜 드립니다", "lat": 37.52795, "lon": 126.92922, "n": 3, "alias": "LG 엘지 여의도 트윈"}, {"code": "samsung-giheung", "group": "삼성", "name": "삼성전자 기흥캠퍼스", "place": "용인 기흥", "tag": "클린룸에 먼지 좀 날려 드립니다", "lat": 37.22987, "lon": 127.08337, "n": 16, "alias": "삼성 samsung 반도체 기흥 용인"}, {"code": "samsung-dc", "group": "삼성", "name": "삼성전자 디지털시티", "place": "수원", "tag": "갤럭시보다 빠른 퇴사", "lat": 37.2576, "lon": 127.05063, "n": 48, "alias": "삼성 samsung 수원 디지털시티 영통"}, {"code": "samsung-seocho", "group": "삼성", "name": "삼성전자 서초사옥", "place": "서초", "tag": "강남역 출근길의 원한", "lat": 37.49643, "lon": 127.02692, "n": 4, "alias": "삼성 samsung 강남 서초"}, {"code": "samsung-pt", "group": "삼성", "name": "삼성전자 평택캠퍼스", "place": "평택", "tag": "세계 최대 반도체 공장, 세계 최대 스트레스", "lat": 37.03389, "lon": 127.05504, "n": 31, "alias": "삼성 samsung 반도체 평택 고덕"}, {"code": "samsung-hwaseong", "group": "삼성", "name": "삼성전자 화성캠퍼스", "place": "화성", "tag": "수율 0%를 달성했습니다", "lat": 37.21819, "lon": 127.06888, "n": 37, "alias": "삼성 samsung 반도체 화성"}, {"code": "hynix-icheon", "group": "SK", "name": "SK하이닉스 이천", "place": "이천", "tag": "HBM보다 높이 쌓인 내 업무", "lat": 37.24973, "lon": 127.47994, "n": 18, "alias": "SK 하이닉스 hynix 반도체 이천 에스케이"}, {"code": "hyundai-namyang", "group": "현대", "name": "현대차 남양연구소", "place": "화성 남양", "tag": "충돌 테스트는 건물로 합니다", "lat": 37.15599, "lon": 126.82705, "n": 15, "alias": "현대 현대자동차 기아 남양 화성 연구소"}, {"code": "hyundai-ulsan", "group": "현대", "name": "현대차 울산공장", "place": "울산", "tag": "컨베이어 벨트를 멈춰라", "lat": 35.5465, "lon": 129.3815, "n": 68, "alias": "현대 현대자동차 울산 공장"}, {"code": "hyundai-yangjae", "group": "현대", "name": "현대차그룹 양재사옥", "place": "양재", "tag": "양재 IC 정체의 원흉", "lat": 37.46432, "lon": 127.0424, "n": 1, "alias": "현대 현대자동차 기아 양재 본사"}, {"code": "naver", "group": "IT", "name": "네이버 사옥", "place": "분당 정자동", "tag": "검색어: 퇴사하는 법", "lat": 37.35924, "lon": 127.10513, "n": 2, "alias": "네이버 naver 그린팩토리 1784 분당 정자"}, {"code": "pangyo", "group": "IT", "name": "판교테크노밸리", "place": "판교", "tag": "판교 야근 불빛을 꺼 드립니다", "lat": 37.40412, "lon": 127.10767, "n": 148, "alias": "판교 카카오 엔씨 넥슨 크래프톤 IT 테크노밸리"}, {"code": "boramae", "group": "병원", "name": "보라매병원", "place": "신대방동", "tag": "3교대 끝, 병동을 비워 드립니다", "lat": 37.49394, "lon": 126.92442, "n": 1, "alias": "보라매 병원 서울대병원 동작 신대방"}, {"code": "nk-kaesong", "group": "북한", "name": "개성공업단지", "place": "개성", "tag": "출퇴근 거리는 짧았는데…", "lat": 37.92966, "lon": 126.61981, "n": 257, "alias": "개성공단 북한 판문"}, {"code": "nk-kimchaek", "group": "북한", "name": "김책제철련합기업소", "place": "청진", "tag": "5개년 계획 조기 달성(파괴 부문)", "lat": 41.75311, "lon": 129.75714, "n": 176, "alias": "김책제철 제철소 북한 청진 철강"}, {"code": "nk-ryugyong", "group": "북한", "name": "류경호텔", "place": "평양", "tag": "30년 공사, 3초 철거", "lat": 39.0366, "lon": 125.73081, "n": 1, "alias": "류경호텔 평양 북한 105층"}];
-const COL = { LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' };
-const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([36.9, 127.6], 7);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 기여자' }).addTo(map);
+const ITEMS = [{"code": "lgd-paju", "region": "kr", "group": "LG", "name": "LG디스플레이 파주", "place": "파주", "tag": "패널보다 먼저 내 멘탈이 깨졌다", "lat": 37.81004, "lon": 126.76831, "n": 25, "alias": "LG 엘지 디스플레이 파주 LGD"}, {"code": "lgsp", "region": "kr", "group": "LG", "name": "LG사이언스파크", "place": "마곡", "tag": "월요일 아침, 회사를 부숴 버렸다", "lat": 37.56281, "lon": 126.83145, "n": 27, "alias": "LG 엘지 마곡 사이언스파크 LG전자 LG화학"}, {"code": "lg-twin", "region": "kr", "group": "LG", "name": "LG트윈타워", "place": "여의도", "tag": "쌍둥이 빌딩, 둘 다 퇴근시켜 드립니다", "lat": 37.52795, "lon": 126.92922, "n": 3, "alias": "LG 엘지 여의도 트윈"}, {"code": "samsung-giheung", "region": "kr", "group": "삼성", "name": "삼성전자 기흥캠퍼스", "place": "용인 기흥", "tag": "클린룸에 먼지 좀 날려 드립니다", "lat": 37.22987, "lon": 127.08337, "n": 16, "alias": "삼성 samsung 반도체 기흥 용인"}, {"code": "samsung-dc", "region": "kr", "group": "삼성", "name": "삼성전자 디지털시티", "place": "수원", "tag": "갤럭시보다 빠른 퇴사", "lat": 37.2576, "lon": 127.05063, "n": 48, "alias": "삼성 samsung 수원 디지털시티 영통"}, {"code": "samsung-seocho", "region": "kr", "group": "삼성", "name": "삼성전자 서초사옥", "place": "서초", "tag": "강남역 출근길의 원한", "lat": 37.49643, "lon": 127.02692, "n": 4, "alias": "삼성 samsung 강남 서초"}, {"code": "samsung-pt", "region": "kr", "group": "삼성", "name": "삼성전자 평택캠퍼스", "place": "평택", "tag": "세계 최대 반도체 공장, 세계 최대 스트레스", "lat": 37.03389, "lon": 127.05504, "n": 31, "alias": "삼성 samsung 반도체 평택 고덕"}, {"code": "samsung-hwaseong", "region": "kr", "group": "삼성", "name": "삼성전자 화성캠퍼스", "place": "화성", "tag": "수율 0%를 달성했습니다", "lat": 37.21819, "lon": 127.06888, "n": 37, "alias": "삼성 samsung 반도체 화성"}, {"code": "hynix-icheon", "region": "kr", "group": "SK", "name": "SK하이닉스 이천", "place": "이천", "tag": "HBM보다 높이 쌓인 내 업무", "lat": 37.24973, "lon": 127.47994, "n": 18, "alias": "SK 하이닉스 hynix 반도체 이천 에스케이"}, {"code": "hyundai-namyang", "region": "kr", "group": "현대", "name": "현대차 남양연구소", "place": "화성 남양", "tag": "충돌 테스트는 건물로 합니다", "lat": 37.15599, "lon": 126.82705, "n": 15, "alias": "현대 현대자동차 기아 남양 화성 연구소"}, {"code": "hyundai-ulsan", "region": "kr", "group": "현대", "name": "현대차 울산공장", "place": "울산", "tag": "컨베이어 벨트를 멈춰라", "lat": 35.5465, "lon": 129.3815, "n": 68, "alias": "현대 현대자동차 울산 공장"}, {"code": "hyundai-yangjae", "region": "kr", "group": "현대", "name": "현대차그룹 양재사옥", "place": "양재", "tag": "양재 IC 정체의 원흉", "lat": 37.46432, "lon": 127.0424, "n": 1, "alias": "현대 현대자동차 기아 양재 본사"}, {"code": "naver", "region": "kr", "group": "IT", "name": "네이버 사옥", "place": "분당 정자동", "tag": "검색어: 퇴사하는 법", "lat": 37.35924, "lon": 127.10513, "n": 2, "alias": "네이버 naver 그린팩토리 1784 분당 정자"}, {"code": "pangyo", "region": "kr", "group": "IT", "name": "판교테크노밸리", "place": "판교", "tag": "판교 야근 불빛을 꺼 드립니다", "lat": 37.40412, "lon": 127.10767, "n": 154, "alias": "판교 카카오 엔씨 넥슨 크래프톤 IT 테크노밸리"}, {"code": "boramae", "region": "kr", "group": "병원", "name": "보라매병원", "place": "신대방동", "tag": "3교대 끝, 병동을 비워 드립니다", "lat": 37.49394, "lon": 126.92442, "n": 1, "alias": "보라매 병원 서울대병원 동작 신대방"}, {"code": "nk-kaesong", "region": "kr", "group": "북한", "name": "개성공업단지", "place": "개성", "tag": "출퇴근 거리는 짧았는데…", "lat": 37.92966, "lon": 126.61981, "n": 258, "alias": "개성공단 북한 판문"}, {"code": "nk-kimchaek", "region": "kr", "group": "북한", "name": "김책제철련합기업소", "place": "청진", "tag": "5개년 계획 조기 달성(파괴 부문)", "lat": 41.75311, "lon": 129.75714, "n": 176, "alias": "김책제철 제철소 북한 청진 철강"}, {"code": "nk-ryugyong", "region": "kr", "group": "북한", "name": "류경호텔", "place": "평양", "tag": "30년 공사, 3초 철거", "lat": 39.0366, "lon": 125.73081, "n": 1, "alias": "류경호텔 평양 북한 105층"}];
+const H = {"title": "회사 부수기 — 지도에서 회사를 골라 부수세요", "desc": "정신나간 직장인의 회사 부수기. 실제 건물 배치로 사직서 폭탄부터 퇴사 핵폭탄까지.", "series": "정신나간 직장인의 회사 부수기", "h1": "어느 회사를 부술까?", "sub": "지도에서 회사를 고르세요. 실제 건물 배치(OpenStreetMap)를 3D로 부숩니다. 사직서 폭탄부터 퇴사 핵폭탄까지.", "tabList": "회사 고르기", "tabRank": "랭킹", "today": "오늘", "total": "전체", "searchPh": "회사·지역 검색 (예: 하이닉스, 판교, 삼성)", "foot": "회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자", "request": "우리 회사도 넣어 줘 →", "all": "전체", "bldgs": "{0}동", "goLong": "부수러 가기 →", "go": "부수기", "none": "맞는 곳이 없어요. 아래 '우리 회사도 넣어 줘'로 요청해 주세요.", "rOff": "랭킹 서버 준비 중이에요.", "loading": "불러오는 중…", "plays": "{0}판", "challenge": "도전하기 →", "noRec": "아직 기록 없음", "rFail": "랭킹을 불러오지 못했어요.", "base": ""};
+const REGION = 'kr';
+document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
+document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "./"], ["us", "🇺🇸 USA", "us/"], ["jp", "🇯🇵 日本", "jp/"], ["cn", "🇨🇳 中国", "cn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
+const COL = new Proxy({ LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' }, { get: (o, k) => o[k] || ['#e4572e', '#2e86ab', '#7b2cbf', '#13a36b', '#c4005a', '#ea5b0c', '#0b2e5c'][[...String(k)].reduce((a, c) => a + c.charCodeAt(0), 0) % 7] });
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([36.4, 127.8], 5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
 const markers = {};
-let group = '전체', query = '';
+let group = H.all, query = '';
 const norm = (s) => s.toLowerCase().replace(/\s+/g, '');
 const match = (it) => !query || norm(`${it.name}${it.place}${it.group}${it.code}${it.alias || ''}`).includes(norm(query));
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 for (const it of ITEMS) {
   const icon = L.divIcon({ className: '', html: `<div class="pin" style="background:${COL[it.group] || '#555'}"><i>${esc(it.group.slice(0, 2))}</i></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
   const m = L.marker([it.lat, it.lon], { icon, title: it.name }).addTo(map);
-  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>부술 건물 ${it.n}동</p><a class="go" href="${it.code}/">부수러 가기 →</a></div>`);
+  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>${H.bldgs.replace('{0}', it.n)}</p><a class="go" href="${H.base}${it.code}/">${H.goLong}</a></div>`);
   m.on('click', () => select(it.code, false));
   markers[it.code] = m;
 }
@@ -107,30 +113,37 @@ function select(code, fly) {
   if (fly) { map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
 }
 function render() {
-  const groups = ['전체', ...new Set(ITEMS.map((i) => i.group))];
+  const groups = [H.all, ...new Set(ITEMS.map((i) => i.group))];
   document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
-  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; const SITE = {"rankApi": ""}
-;
-const RANK_ON = !!SITE.rankApi;
-async function api(path) { const r = await fetch(`${SITE.rankApi}/${path}`); if (!r.ok) throw new Error(r.status); return r.json(); }
+  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
+  const shown = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i));
+  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}' — ${H.none}</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${H.bldgs.replace('{0}', it.n)} · ${esc(it.tag)}</span></div><a class="go" href="${H.base}${it.code}/">${H.go}</a></div>`).join('');
+  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
+  for (const it of ITEMS) { const on = (group === H.all || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
+}
+function fit() { const pts = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
+render(); fit();
+const SITE = {"supabaseUrl": "https://eardnytyohdekpvkzmid.supabase.co", "supabaseKey": "sb_publishable_2X8Cl7S9KwHjyNgkxnr0wg_zdsq3eEE"};
+const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
+async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
 let period = 'today', rankCache = null;
 async function showRank() {
   const body = document.getElementById('rankBody');
-  if (!RANK_ON) { body.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요. 게임 안에서 점수를 등록하면 여기에 회사별로 쌓입니다.</p>'; return; }
-  body.innerHTML = '<p class="muted">불러오는 중…</p>';
+  if (!RANK_ON) { body.innerHTML = `<p class="muted">${H.rOff}</p>`; return; }
+  body.innerHTML = `<p class="muted">${H.loading}</p>`;
   try {
-    rankCache = rankCache || await api('companies');
+    rankCache = rankCache || await rpc('smash_companies');
     const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
     const max = Math.max(1, rows[0].v);
-    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${r.plays.toLocaleString()}판 · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
     document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
       const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
-      box.innerHTML = '<p class="muted">불러오는 중…</p>';
-      const top = await api(`board?company=${el.dataset.code}&limit=10`).catch(() => []);
+      box.innerHTML = `<p class="muted">${H.loading}</p>`;
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
       box.dataset.loaded = 1;
-      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${el.dataset.code}/">도전하기 →</a>` : '<p class="muted">아직 기록 없음</p>';
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
     }));
-  } catch (e) { body.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+  } catch (e) { body.innerHTML = `<p class="muted">${H.rFail}</p>`; }
 }
 function tab(t) {
   document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
@@ -142,17 +155,9 @@ document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.datase
 document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
 const sEl = document.getElementById('search');
 sEl.addEventListener('input', () => { query = sEl.value.trim(); renderList(); });
-sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === '전체' || i.group === group) && match(i)); if (first) select(first.code, true); } });
+sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === H.all || i.group === group) && match(i)); if (first) select(first.code, true); } });
 function renderList() { render(); fit(); }
-render(); fit();
-if (location.hash === '#rank') tab('rank'); }));
-  const shown = ITEMS.filter((i) => (group === '전체' || i.group === group) && match(i));
-  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}'에 맞는 곳이 없어요. 아래 '우리 회사도 넣어 줘'로 요청해 주세요.</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${it.n}동 · ${esc(it.tag)}</span></div><a class="go" href="${it.code}/">부수기</a></div>`).join('');
-  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
-  for (const it of ITEMS) { const on = (group === '전체' || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
-}
-function fit() { const pts = ITEMS.filter((i) => (group === '전체' || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
-render(); fit();
+if (location.hash === '#rank') tab('rank');
 </script>
 </body>
 </html>

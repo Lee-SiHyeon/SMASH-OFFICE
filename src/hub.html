@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="ko">
+<html lang="/*LANG*/">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>회사 부수기 — 정신나간 직장인의 회사 부수기</title>
-<meta name="description" content="지도에서 회사를 골라 3D로 부수는 스트레스 해소 게임. LG, 삼성, SK하이닉스, 현대차, 판교, 네이버, 보라매병원.">
-<meta property="og:title" content="회사 부수기 — 지도에서 회사를 골라 부수세요">
-<meta property="og:description" content="정신나간 직장인의 회사 부수기. 사직서 폭탄부터 퇴사 핵폭탄까지">
+<title>/*TITLE*/</title>
+<meta name="description" content="/*DESC*/">
+<meta property="og:title" content="/*TITLE*/">
+<meta property="og:description" content="/*DESC*/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE/">
-<meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE/lgsp/og.png">
+<meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE//*PATH*/">
+<meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE//*OGIMG*//og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23ff6a2b%22/%3E%3Cpath d=%22M8 24V12l4-3v15M14 24V7l5 3v14M21 24V14l3 2v8%22 stroke=%22white%22 stroke-width=%222%22 fill=%22none%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -36,6 +36,7 @@ h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 .card .t{flex:1;min-width:0}
 .card b{display:block;font-size:15px}
 .card span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#regions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.rg{font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.rg.on{color:#111;background:var(--fg);border-color:var(--fg)}
 #tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
 #rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
 .rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
@@ -70,34 +71,39 @@ footer a{color:#ffb38f}
 <div id="app">
   <aside id="side">
     <header>
-      <div class="series">정신나간 직장인의 회사 부수기</div>
-      <h1>어느 회사를 부술까?</h1>
-      <div class="sub">지도에서 회사를 고르세요. 실제 건물 배치(OpenStreetMap)를 3D로 부숩니다. 사직서 폭탄부터 퇴사 핵폭탄까지.</div>
+      <div id="regions"></div>
+      <div class="series" data-h="series"></div>
+      <h1 data-h="h1"></h1>
+      <div class="sub" data-h="sub"></div>
     </header>
-    <div id="tabs"><button class="tab on" data-t="list">회사 고르기</button><button class="tab" data-t="rank">랭킹</button></div>
-    <div id="searchWrap"><input id="search" type="search" placeholder="회사·지역 검색 (예: 하이닉스, 판교, 삼성)" autocomplete="off"></div>
+    <div id="tabs"><button class="tab on" data-t="list" data-h="tabList"></button><button class="tab" data-t="rank" data-h="tabRank"></button></div>
+    <div id="searchWrap"><input id="search" type="search" data-h="searchPh" data-attr="placeholder" autocomplete="off"></div>
     <div id="chips"></div>
     <div id="list"></div>
-    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today">오늘</button><button class="rt" data-p="total">전체</button></div><div id="rankBody"></div></div>
-    <footer>회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자<br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues">우리 회사도 넣어 줘 →</a></footer>
+    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
+    <footer><span data-h="foot"></span><br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues" data-h="request"></a></footer>
   </aside>
   <div id="map"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const ITEMS = /*ITEMS*/;
-const COL = { LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' };
-const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([36.9, 127.6], 7);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 기여자' }).addTo(map);
+const H = /*HSTR*/;
+const REGION = '/*REGION*/';
+document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
+document.getElementById('regions').innerHTML = /*REGIONS*/.map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
+const COL = new Proxy({ LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' }, { get: (o, k) => o[k] || ['#e4572e', '#2e86ab', '#7b2cbf', '#13a36b', '#c4005a', '#ea5b0c', '#0b2e5c'][[...String(k)].reduce((a, c) => a + c.charCodeAt(0), 0) % 7] });
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView(/*CENTER*/, 5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
 const markers = {};
-let group = '전체', query = '';
+let group = H.all, query = '';
 const norm = (s) => s.toLowerCase().replace(/\s+/g, '');
 const match = (it) => !query || norm(`${it.name}${it.place}${it.group}${it.code}${it.alias || ''}`).includes(norm(query));
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 for (const it of ITEMS) {
   const icon = L.divIcon({ className: '', html: `<div class="pin" style="background:${COL[it.group] || '#555'}"><i>${esc(it.group.slice(0, 2))}</i></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
   const m = L.marker([it.lat, it.lon], { icon, title: it.name }).addTo(map);
-  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>부술 건물 ${it.n}동</p><a class="go" href="${it.code}/">부수러 가기 →</a></div>`);
+  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>${H.bldgs.replace('{0}', it.n)}</p><a class="go" href="${H.base}${it.code}/">${H.goLong}</a></div>`);
   m.on('click', () => select(it.code, false));
   markers[it.code] = m;
 }
@@ -107,29 +113,37 @@ function select(code, fly) {
   if (fly) { map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
 }
 function render() {
-  const groups = ['전체', ...new Set(ITEMS.map((i) => i.group))];
+  const groups = [H.all, ...new Set(ITEMS.map((i) => i.group))];
   document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
-  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; const SITE = /*SITE*/;
-const RANK_ON = !!SITE.rankApi;
-async function api(path) { const r = await fetch(`${SITE.rankApi}/${path}`); if (!r.ok) throw new Error(r.status); return r.json(); }
+  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
+  const shown = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i));
+  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}' — ${H.none}</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${H.bldgs.replace('{0}', it.n)} · ${esc(it.tag)}</span></div><a class="go" href="${H.base}${it.code}/">${H.go}</a></div>`).join('');
+  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
+  for (const it of ITEMS) { const on = (group === H.all || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
+}
+function fit() { const pts = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
+render(); fit();
+const SITE = /*SITE*/;
+const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
+async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
 let period = 'today', rankCache = null;
 async function showRank() {
   const body = document.getElementById('rankBody');
-  if (!RANK_ON) { body.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요. 게임 안에서 점수를 등록하면 여기에 회사별로 쌓입니다.</p>'; return; }
-  body.innerHTML = '<p class="muted">불러오는 중…</p>';
+  if (!RANK_ON) { body.innerHTML = `<p class="muted">${H.rOff}</p>`; return; }
+  body.innerHTML = `<p class="muted">${H.loading}</p>`;
   try {
-    rankCache = rankCache || await api('companies');
+    rankCache = rankCache || await rpc('smash_companies');
     const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
     const max = Math.max(1, rows[0].v);
-    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${r.plays.toLocaleString()}판 · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
     document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
       const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
-      box.innerHTML = '<p class="muted">불러오는 중…</p>';
-      const top = await api(`board?company=${el.dataset.code}&limit=10`).catch(() => []);
+      box.innerHTML = `<p class="muted">${H.loading}</p>`;
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
       box.dataset.loaded = 1;
-      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${el.dataset.code}/">도전하기 →</a>` : '<p class="muted">아직 기록 없음</p>';
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
     }));
-  } catch (e) { body.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+  } catch (e) { body.innerHTML = `<p class="muted">${H.rFail}</p>`; }
 }
 function tab(t) {
   document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
@@ -141,17 +155,9 @@ document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.datase
 document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
 const sEl = document.getElementById('search');
 sEl.addEventListener('input', () => { query = sEl.value.trim(); renderList(); });
-sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === '전체' || i.group === group) && match(i)); if (first) select(first.code, true); } });
+sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === H.all || i.group === group) && match(i)); if (first) select(first.code, true); } });
 function renderList() { render(); fit(); }
-render(); fit();
-if (location.hash === '#rank') tab('rank'); }));
-  const shown = ITEMS.filter((i) => (group === '전체' || i.group === group) && match(i));
-  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}'에 맞는 곳이 없어요. 아래 '우리 회사도 넣어 줘'로 요청해 주세요.</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${it.n}동 · ${esc(it.tag)}</span></div><a class="go" href="${it.code}/">부수기</a></div>`).join('');
-  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
-  for (const it of ITEMS) { const on = (group === '전체' || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
-}
-function fit() { const pts = ITEMS.filter((i) => (group === '전체' || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
-render(); fit();
+if (location.hash === '#rank') tab('rank');
 </script>
 </body>
 </html>

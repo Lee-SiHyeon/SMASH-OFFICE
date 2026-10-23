@@ -1,0 +1,19 @@
+{
+ "code": "microsoft",
+ "region": "us",
+ "lang": "en",
+ "group": "Big Tech",
+ "company": "Microsoft Campus",
+ "place": "Redmond",
+ "site": [
+  [
+   "point",
+   47.64,
+   -122.13,
+   600
+  ]
+ ],
+ "tagline": "Ctrl+Alt+Delete the office",
+ "series": "Office Smash",
+ "alias": "microsoft msft redmond campus windows"
+}

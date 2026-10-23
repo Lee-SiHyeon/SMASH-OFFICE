@@ -1,0 +1,21 @@
+{
+ "code": "nvidia",
+ "region": "us",
+ "lang": "en",
+ "group": "Big Tech",
+ "company": "NVIDIA HQ",
+ "place": "Santa Clara",
+ "site": [
+  [
+   "way",
+   1053138344
+  ],
+  [
+   "way",
+   543998399
+  ]
+ ],
+ "tagline": "Overclocked and overworked",
+ "series": "Office Smash",
+ "alias": "nvidia voyager endeavor santa clara gpu"
+}

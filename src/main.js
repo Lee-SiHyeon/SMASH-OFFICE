@@ -1,9 +1,13 @@
 // SMASH 회사 부수기 엔진 — 처음부터 새로 쓴 코드 (three.js r160)
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { makeT } from './i18n.js';
 
 const SCENE = JSON.parse(document.getElementById('scene-data').textContent);
 const CFG = JSON.parse(document.getElementById('config-data').textContent);
+const LANG = CFG.lang || 'ko';
+const T = makeT(LANG);
+const NUM = (v, o) => Number(v).toLocaleString(LANG === 'zh' ? 'zh-CN' : LANG, o);
 const BENCH = location.hash.includes('bench'); // 렌더 없이 계산만 재는 모드
 const IS_MOBILE = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
 
@@ -12,10 +16,10 @@ const canvas = document.getElementById('stage');
 // GPU 이름으로 소프트웨어 렌더링(하드웨어 가속 꺼짐) 감지
 const GPU_NAME = (() => { try { const g = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl'); const e = g && g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } })();
 const SOFTWARE_GL = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(GPU_NAME);
-const QUALITY = [ // 0 낮음 · 1 보통 · 2 높음
-  { name: '낮음', shadow: 0, px: 0.9e6, dprMax: 0.8, fxk: 0.35 },
-  { name: '보통', shadow: 2048, px: 2.1e6, dprMax: 1.0, fxk: 0.6 },
-  { name: '높음', shadow: 4096, px: 4.2e6, dprMax: 1.5, fxk: 1 },
+const QUALITY = [ // 0 낮음 · 1 보통 · 2 높음  (휴대폰은 화면이 작아서 배율을 더 높게)
+  { name: T('q')[0], shadow: 0, px: 0.9e6, dprMax: IS_MOBILE ? 1.0 : 0.8, fxk: 0.35 },
+  { name: T('q')[1], shadow: 2048, px: IS_MOBILE ? 1.6e6 : 2.1e6, dprMax: IS_MOBILE ? 1.75 : 1.0, fxk: IS_MOBILE ? 0.75 : 0.6 },
+  { name: T('q')[2], shadow: 4096, px: IS_MOBILE ? 2.6e6 : 4.2e6, dprMax: IS_MOBILE ? 2.5 : 1.5, fxk: 1 },
 ];
 let qLevel = (() => { try { const v = localStorage.getItem('smash-q'); if (v !== null) return +v; } catch (e) {} return SOFTWARE_GL ? 0 : 1; })();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE && !SOFTWARE_GL && devicePixelRatio < 1.5, powerPreference: 'high-performance' });
@@ -299,8 +303,8 @@ function crater(x, z, r, depth, heatAmt = 0) {
   trees.clear(x, z, r);
   if (!coreReached && deepest >= MAXD - 0.5) {
     coreReached = true;
-    toast(`지구 중심 도달! 계속 파면 ${CFG.antipode || '지구 반대편'}`, 5000);
-    award(20000, '지구 중심 보너스');
+    toast(T('core', CFG.antipode || ''), 5000);
+    award(20000, T('coreBonus'));
   }
 }
 function decayHeat(dt) {
@@ -408,6 +412,22 @@ const rubIdx = (() => {
     },
   };
 })();
+// 잔해가 빠진 자리: 더미 높이를 남은 잔해로 다시 쌓고, 받침이 사라져 떠 있는 잔해는 다시 떨어뜨림
+function resettle(x, z, r) {
+  pile.clear(x, z, r);
+  const L = rubbleL, list = rubIdx.collect(x, z, r).filter((s) => L.alive[s]);
+  list.sort((a, b) => L.pos[a * 3 + 1] - L.pos[b * 3 + 1]);
+  for (const s of list) {
+    const px = L.pos[s * 3], py = L.pos[s * 3 + 1], pz = L.pos[s * 3 + 2];
+    const half = (L.size[s * 3] + L.size[s * 3 + 1] + L.size[s * 3 + 2]) / 6;
+    const fl = floorAt(px, pz);
+    if (py - half * 0.8 > fl + 1.2 && debris.n < debris.cap - 20) {
+      _q.fromArray(L.quat, s * 4);
+      debris.spawn(px, py, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], 0, 0, 0, 0.3);
+      L.remove(s);
+    } else pile.raise(px, pz, Math.max(L.size[s * 3], L.size[s * 3 + 2]) * 0.35, py + half * 0.6 - groundH(px, pz));
+  }
+}
 const rubble = {
   wake(x, z, r, power, cx = x, cz = z) { // 반경 안 잔해를 다시 움직이게
     const L = rubbleL; let n = 0;
@@ -425,6 +445,7 @@ const rubble = {
         L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], dx / dl * f, f * 0.8 + rnd(0, 2), dz / dl * f, f * 0.05);
       L.remove(s); n++;
     }
+    if (n) resettle(x, z, r + 6);
     return n;
   },
 };
@@ -432,7 +453,7 @@ const rubble = {
 // 날아다니는 조각
 const _wq = new THREE.Quaternion(), _dq = new THREE.Quaternion();
 const debris = (() => {
-  const cap = IS_MOBILE ? 3000 : 5000;
+  const cap = IS_MOBILE ? 4000 : 5000;
   const m = new THREE.InstancedMesh(BOX, BLOCK_MATS, cap);
   m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -822,9 +843,9 @@ function checkCollapse(b) {
   if (b.collapsed) return;
   if (b.alive <= b.vol * 0.2) {
     b.collapsed = true;
-    const nm = b.name || (b.site ? `${CFG.company} 이름 없는 동` : '');
-    if (b.site) { award(5000, `${nm} 붕괴!`); collapsedSite++; }
-    else award(800, nm ? `${nm} 붕괴` : '옆 건물 붕괴');
+    const nm = b.name || (b.site ? T('noName', CFG.company) : '');
+    if (b.site) { award(5000, T('collapse', nm)); collapsedSite++; }
+    else award(800, nm ? T('collapseSmall', nm) : T('nextBldg'));
   }
 }
 let collapsedSite = 0;
@@ -914,9 +935,9 @@ class Particles {
     for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) g.attributes[k].needsUpdate = true;
   }
 }
-const fire = new Particles(IS_MOBILE ? 2500 : 5000, true);
-const smoke = new Particles(IS_MOBILE ? 3000 : 6000, false);
-let FXK = Math.min(QUALITY[qLevel].fxk, IS_MOBILE ? 0.5 : 1); // 화질에 따라 연기·불꽃 양
+const fire = new Particles(IS_MOBILE ? 3500 : 5000, true);
+const smoke = new Particles(IS_MOBILE ? 4500 : 6000, false);
+let FXK = QUALITY[qLevel].fxk; // 화질에 따라 연기·불꽃 양
 
 // 충격파 링, 불덩이
 const fx = [];
@@ -955,8 +976,7 @@ function explosionFX(x, y, z, R, big = 1) {
 }
 
 // ───────────────────────── 점수 · 직급 ─────────────────────────
-const RANKS = [['인턴', 0, '#8b95a5'], ['사원', 600, '#5ea2d8'], ['대리', 2200, '#3fb37f'], ['과장', 5500, '#e2b33c'],
-  ['차장', 11000, '#ef8a32'], ['부장', 20000, '#e5533d'], ['상무', 34000, '#c13cc9'], ['퇴사각', 52000, '#ff2d55']];
+const RANKS = [[0, '#8b95a5'], [600, '#5ea2d8'], [2200, '#3fb37f'], [5500, '#e2b33c'], [11000, '#ef8a32'], [20000, '#e5533d'], [34000, '#c13cc9'], [52000, '#ff2d55']].map(([v, c], i) => [T('ranks')[i], v, c]);
 let score = 0, style = 0, lastHit = 0, maxRank = 0, recent = [], toolMult = 1, simTime = 0;
 let pend = 0; const pendPos = new THREE.Vector3(); let pendT = 0;
 const rankIdx = () => { let r = 0; RANKS.forEach((k, i) => { if (style >= k[1]) r = i; }); return r; };
@@ -964,10 +984,10 @@ const totalMult = () => toolMult * (1 + rankIdx() * 0.12);
 function pts(n, x, y, z, quiet) {
   if (!Number.isFinite(x + y + z)) { x = y = z = 0; }
   const v = n * totalMult(); score += v; style += n * 0.55; lastHit = simTime;
-  const r = rankIdx(); if (r > maxRank) { maxRank = r; if (r >= 2) toast(`승진! ${RANKS[r][0]}`, 1600, RANKS[r][2]); }
+  const r = rankIdx(); if (r > maxRank) { maxRank = r; if (r >= 2) toast(T('promo', RANKS[r][0]), 1600, RANKS[r][2]); }
   pend += v; pendPos.set(x, y, z);
 }
-function award(n, label) { score += n * totalMult(); style += n * 0.3; lastHit = simTime; toast(`${label}  +${Math.round(n * totalMult()).toLocaleString()}`, 2200); }
+function award(n, label) { score += n * totalMult(); style += n * 0.3; lastHit = simTime; toast(`${label}  +${NUM(Math.round(n * totalMult()))}`, 2200); }
 function recordTool(id) {
   recent.push(id); if (recent.length > 6) recent.shift();
   const last4 = recent.slice(-4);
@@ -1037,20 +1057,28 @@ function explode(x, y, z, R, power, opt = {}) {
 }
 
 // ───────────────────────── 도구 ─────────────────────────
-const LABELS = {
-  bomb: ['사직서 제출!', '오늘부로 그만둡니다', '연차 소진 완료'],
-  bat: ['반려!', '재검토 바랍니다', '결재 완료', '다시 해 와'],
-  laser: ['#REF!', '#DIV/0!', '#VALUE!', '#N/A', '#NAME?', '순환 참조!'],
-  meteor: ['성과급 0원', 'S등급(아님)', '연봉 동결'],
-  quake: ['월요일 09:00', '주간회의 시작', '긴급 보고'],
-  nuke: ['퇴사합니다', '그동안 감사했습니다'],
-};
+const LABELS = T('labels');
 const pick1 = (a) => a[(Math.random() * a.length) | 0];
 
+const envTex = (() => {
+  const [c, x] = makeCanvas(256, 180);
+  x.fillStyle = '#fbfaf5'; x.fillRect(0, 0, 256, 180);
+  x.strokeStyle = '#c9c4b8'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 172);
+  x.beginPath(); x.moveTo(6, 8); x.lineTo(128, 96); x.lineTo(250, 8); x.stroke();
+  x.fillStyle = '#1b1b1b'; x.font = `900 46px ${getComputedStyle(document.body).fontFamily}`; x.textAlign = 'center'; x.fillText(T('envelope'), 128, 150);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const camScale = () => THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) / 260, 1, 5); // 멀리서 봐도 보이게
 function dropBomb(P) {
-  const env = new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 5), new THREE.MeshStandardMaterial({ color: '#fbfaf5' }));
-  env.position.set(P.x, P.y + 70, P.z); world.add(env);
-  fx.push({ t: 0, dur: 0.38, up(t) { env.position.y = P.y + 70 * (1 - t * t); env.rotation.set(t * 9, t * 4, t * 6); }, done() {
+  const k = camScale();
+  const env = new THREE.Mesh(new THREE.BoxGeometry(9 * k, 0.5 * k, 6.5 * k), [0, 0, 1, 1, 0, 0].map((f) => new THREE.MeshStandardMaterial(f ? { map: envTex } : { color: '#efece4' })));
+  env.castShadow = true;
+  const H = 90 * k; env.position.set(P.x, P.y + H, P.z); world.add(env);
+  fx.push({ t: 0, dur: 0.62, up(t) {
+    const e = t * t; env.position.set(P.x + Math.sin(t * 9) * 4 * k * (1 - t), P.y + H * (1 - e), P.z + Math.cos(t * 7) * 3 * k * (1 - t));
+    env.rotation.set(Math.sin(t * 10) * 0.6, t * 5, Math.cos(t * 8) * 0.5);
+    if (Math.random() < 0.6) smoke.spawn(env.position.x, env.position.y, env.position.z, 0, 2, 0, 3 * k, 0.6, [1, 1, 1], [0.9, 0.9, 0.9], 0.35);
+  }, done() {
     world.remove(env); env.geometry.dispose();
     explode(P.x, P.y + 2, P.z, 14, 40, { crater: [12, 4.5] });
     if (Math.random() < 0.45) floatText(P, pick1(LABELS.bomb), '#fff');
@@ -1063,24 +1091,24 @@ const boardTex = (() => {
   x.fillStyle = '#2b2b2e'; x.fillRect(0, 0, 512, 160);
   x.fillStyle = '#f6f4ee'; x.fillRect(40, 12, 460, 136);
   x.fillStyle = '#9aa0a6'; x.fillRect(8, 50, 40, 60);
-  x.strokeStyle = '#222'; x.lineWidth = 3; x.font = 'bold 26px sans-serif'; x.fillStyle = '#222';
-  ['담당', '팀장', '실장', '본부장'].forEach((t, i) => { x.strokeRect(70 + i * 100, 24, 96, 112); x.fillText(t, 82 + i * 100, 56); });
+  x.strokeStyle = '#222'; x.lineWidth = 3; x.font = 'bold 24px sans-serif'; x.fillStyle = '#222';
+  T('board').forEach((t, i) => { x.strokeRect(70 + i * 100, 24, 96, 112); x.fillText(t, 82 + i * 100, 56); });
   x.strokeStyle = '#d4202a'; x.lineWidth = 7; x.beginPath(); x.arc(380, 100, 42, 0, 7); x.stroke();
-  x.fillStyle = '#d4202a'; x.font = 'bold 30px sans-serif'; x.fillText('반려', 350, 112);
+  x.fillStyle = '#d4202a'; x.font = 'bold 26px sans-serif'; x.textAlign = 'center'; x.fillText(T('reject'), 380, 110); x.textAlign = 'left';
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 })();
 function swingBat(P) {
-  const L = 36 * batScale, id = batSeq++;
+  const L = 36 * batScale, id = batSeq++, VL = Math.max(L, 30 * camScale()); // VL: 보이는 크기
   const fwd = camFwd(), tan = new THREE.Vector3(-fwd.z, 0, fwd.x);
-  const pivot = P.clone().addScaledVector(fwd, -L * 0.55); pivot.y = Math.max(P.y, L * 0.12);
+  const pivot = P.clone().addScaledVector(fwd, -VL * 0.55); pivot.y = Math.max(P.y, VL * 0.12);
   const g = new THREE.Group(); g.position.copy(pivot);
-  const board = new THREE.Mesh(new THREE.BoxGeometry(L, L * 0.3, L * 0.03), [0, 0, 0, 0, 1, 1].map((k) => (k ? new THREE.MeshStandardMaterial({ map: boardTex }) : new THREE.MeshStandardMaterial({ color: '#2b2b2e' }))));
-  board.position.x = L / 2; board.castShadow = true; g.add(board); world.add(g);
+  const board = new THREE.Mesh(new THREE.BoxGeometry(VL, VL * 0.3, VL * 0.03), [0, 0, 0, 0, 1, 1].map((k) => (k ? new THREE.MeshStandardMaterial({ map: boardTex }) : new THREE.MeshStandardMaterial({ color: '#2b2b2e' }))));
+  board.position.x = VL / 2; board.castShadow = true; g.add(board); world.add(g);
   const phi0 = Math.atan2(-fwd.z, fwd.x);
   sfx.whoosh(0.22);
   let hit = false;
-  fx.push({ t: 0, dur: 0.55, up(t) {
-    const s = Math.min(1, t / 0.45);
+  fx.push({ t: 0, dur: 0.8, up(t) {
+    const s = Math.min(1, t / 0.4);
     g.rotation.y = phi0 + 1.5 - 3 * (s * s * (3 - 2 * s));
     if (!hit && s >= 0.5) {
       hit = true;
@@ -1098,7 +1126,7 @@ function swingBat(P) {
   }, done() { world.remove(g); board.geometry.dispose(); } });
 }
 function batLanded(id, dist, x, y, z) {
-  if (dist > 70 && !batHR.has(id)) { batHR.add(id); award(3000, `홈런! ${Math.round(dist)} m`); floatText(new THREE.Vector3(x, y + 8, z), `홈런 ${Math.round(dist)}m`, '#ffe066'); }
+  if (dist > 70 && !batHR.has(id)) { batHR.add(id); award(3000, T('homerun', Math.round(dist))); floatText(new THREE.Vector3(x, y + 8, z), T('homerunShort', Math.round(dist)), '#ffe066'); }
 }
 
 // 엑셀 레이저
@@ -1189,7 +1217,7 @@ function startQuake(P) {
   const M = quakeM, A = Math.min(9, 0.08 * Math.pow(1.9, M - 4));
   quake = { t: 0, dur: 3.2, M, A, P: P.clone() };
   sfx.rumble(3.4, Math.min(1, (M - 4) / 5)); shake(A * 0.6);
-  floatText(P.clone().setY(P.y + 25), `규모 ${M.toFixed(1)} · ${pick1(LABELS.quake)}`, '#ffd28a');
+  floatText(P.clone().setY(P.y + 25), T('magLabel', M.toFixed(1), pick1(LABELS.quake)), '#ffd28a');
   for (const b of buildings) {
     if (b.gone) continue;
     const d = Math.hypot(b.cx - P.x, b.cz - P.z), I = M - 2.6 * Math.log10(1 + d / 50);
@@ -1245,7 +1273,7 @@ function detonate(P) {
   debris.push(P.x, P.y, P.z, R * 1.3, 150);
   trees.clear(P.x, P.z, R);
   crater(P.x, P.z, 230, 75);
-  award(30000, '퇴사 완료');
+  award(30000, T('quit'));
   fx.push({ t: 0, dur: 9, up(t) { // 버섯구름
     const H = Math.min(520, 700 * Math.sqrt(t));
     for (let i = 0; i < 9 * FXK; i++) {
@@ -1262,12 +1290,12 @@ function detonate(P) {
 // ───────────────────────── UI ─────────────────────────
 const $ = (id) => document.getElementById(id);
 const TOOLS = [
-  { id: 'bomb', short: '사직서', svg: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 8l9 6 9-6"/>', name: '사직서 폭탄', icon: '✉️', tip: '누른 곳에 사직서를 던져 넓게 날리고 구덩이를 팝니다' },
-  { id: 'bat', short: '결재판', svg: '<rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3" rx="1"/><path d="M8 10h8M8 14h5"/><circle cx="15.5" cy="16.5" r="2.2"/>', name: '결재판 풀스윙', icon: '📋', tip: '거대한 결재판으로 쳐서 덩어리를 멀리 날립니다. 70 m 넘으면 홈런', slider: { label: '결재판 크기', min: 0.5, max: 3, step: 0.1, get: () => batScale, set: (v) => (batScale = v), fmt: (v) => `×${v.toFixed(1)} · ${Math.round(36 * v)} m` } },
-  { id: 'laser', short: '레이저', svg: '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>', name: '엑셀 레이저', icon: '📊', tip: '끌어서 선을 그으면 빔이 그 선을 훑습니다. 톡 누르면 한 점만' },
-  { id: 'meteor', short: '운석', svg: '<circle cx="15" cy="15" r="5"/><path d="M3 3l8 8M7 3l6 6M3 7l6 6"/>', name: '성과급 운석', icon: '☄️', tip: '하늘에서 운석이 떨어져 큰 구덩이를 만듭니다' },
-  { id: 'quake', short: '지진', svg: '<path d="M2 13h4l2-6 3 11 3-9 2 4h6"/>', name: '월요병 지진', icon: '🌋', tip: '누른 곳이 진원. 규모 8 이상이면 건물이 통째로 주저앉습니다', slider: { label: '규모', min: 4, max: 10, step: 0.1, get: () => quakeM, set: (v) => (quakeM = v), fmt: (v) => `M ${v.toFixed(1)} · ${v < 6 ? '흔들림' : v < 8 ? '부분 붕괴' : '전면 붕괴'}` } },
-  { id: 'nuke', short: '핵폭탄', svg: '<circle cx="12" cy="12" r="2"/><path d="M12 10L8.5 4a8 8 0 0 1 7 0zM13.7 13l3.5 6a8 8 0 0 0 3.5-6zM10.3 13l-3.5 6a8 8 0 0 1-3.5-6z" fill="currentColor"/>', name: '퇴사 핵폭탄', icon: '☢️', tip: '반경 420 m를 통째로 날립니다' },
+  { id: 'bomb', short: T('tools.bomb')[1], svg: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 8l9 6 9-6"/>', name: T('tools.bomb')[0], tip: T('tools.bomb')[2] },
+  { id: 'bat', short: T('tools.bat')[1], svg: '<rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3" rx="1"/><path d="M8 10h8M8 14h5"/><circle cx="15.5" cy="16.5" r="2.2"/>', name: T('tools.bat')[0], tip: T('tools.bat')[2], slider: { label: T('batSize'), min: 0.5, max: 3, step: 0.1, get: () => batScale, set: (v) => (batScale = v), fmt: (v) => `×${v.toFixed(1)} · ${Math.round(36 * v)} m` } },
+  { id: 'laser', short: T('tools.laser')[1], svg: '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>', name: T('tools.laser')[0], tip: T('tools.laser')[2] },
+  { id: 'meteor', short: T('tools.meteor')[1], svg: '<circle cx="15" cy="15" r="5"/><path d="M3 3l8 8M7 3l6 6M3 7l6 6"/>', name: T('tools.meteor')[0], tip: T('tools.meteor')[2] },
+  { id: 'quake', short: T('tools.quake')[1], svg: '<path d="M2 13h4l2-6 3 11 3-9 2 4h6"/>', name: T('tools.quake')[0], tip: T('tools.quake')[2], slider: { label: T('mag'), min: 4, max: 10, step: 0.1, get: () => quakeM, set: (v) => (quakeM = v), fmt: (v) => `M ${v.toFixed(1)} · ${T('qk')[v < 6 ? 0 : v < 7.5 ? 1 : 2]}` } },
+  { id: 'nuke', short: T('tools.nuke')[1], svg: '<circle cx="12" cy="12" r="2"/><path d="M12 10L8.5 4a8 8 0 0 1 7 0zM13.7 13l3.5 6a8 8 0 0 0 3.5-6zM10.3 13l-3.5 6a8 8 0 0 1-3.5-6z" fill="currentColor"/>', name: T('tools.nuke')[0], tip: T('tools.nuke')[2] },
 ];
 let tool = 'bomb';
 function buildDock() {
@@ -1321,13 +1349,13 @@ function setNight(on) {
 const hudEls = {};
 function hud() {
   const r = rankIdx();
-  hudEls.score.textContent = Math.round(score).toLocaleString();
+  hudEls.score.textContent = NUM(Math.round(score));
   hudEls.rank.textContent = RANKS[r][0]; hudEls.rank.style.background = RANKS[r][2];
   const nxt = RANKS[r + 1]; hudEls.bar.style.width = nxt ? `${Math.min(100, ((style - RANKS[r][1]) / (nxt[1] - RANKS[r][1])) * 100)}%` : '100%';
   hudEls.mult.textContent = `×${totalMult().toFixed(2)}`;
   hudEls.rate.textContent = `${Math.min(100, (destroyedSite / SITE_VOL) * 100).toFixed(1)}%`;
-  hudEls.cnt.textContent = `${collapsedSite} / ${SITE_COUNT}동`;
-  hudEls.depth.textContent = `${(6371 * Math.pow(Math.min(1, deepest / MAXD), 1.6)).toLocaleString(undefined, { maximumFractionDigits: deepest < 40 ? 1 : 0 })} km`;
+  hudEls.cnt.textContent = T('count', collapsedSite, SITE_COUNT);
+  hudEls.depth.textContent = `${NUM(6371 * Math.pow(Math.min(1, deepest / MAXD), 1.6), { maximumFractionDigits: deepest < 40 ? 1 : 0 })} ${T('km')}`;
 }
 
 // 결과 카드
@@ -1341,9 +1369,9 @@ function makeCard() {
     const g = x.createLinearGradient(0, 0, 760, 0); g.addColorStop(0, 'rgba(10,14,22,.88)'); g.addColorStop(1, 'rgba(10,14,22,0)');
     x.fillStyle = g; x.fillRect(0, 0, 1200, 630);
     x.fillStyle = '#ff6a2b'; x.font = '700 22px sans-serif'; x.fillText(CFG.series, 56, 70);
-    x.fillStyle = '#fff'; x.font = '900 54px sans-serif'; x.fillText(`${CFG.company} 부수기`, 56, 132);
-    const rows = [['점수', Math.round(score).toLocaleString()], ['최고 직급', RANKS[maxRank][0]], ['회사 파괴율', hudEls.rate.textContent], ['무너진 건물', hudEls.cnt.textContent], ['판 깊이', hudEls.depth.textContent]];
-    rows.forEach(([k, v], i) => { x.fillStyle = '#aab4c3'; x.font = '500 24px sans-serif'; x.fillText(k, 56, 210 + i * 70); x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(v, 230, 214 + i * 70); });
+    x.fillStyle = '#fff'; x.font = '900 54px sans-serif'; x.fillText(T('smash', CFG.company), 56, 132);
+    const CL = T('card'); const rows = [[CL[0], NUM(Math.round(score))], [CL[1], RANKS[maxRank][0]], [CL[2], hudEls.rate.textContent], [CL[3], hudEls.cnt.textContent], [CL[4], hudEls.depth.textContent]];
+    rows.forEach(([k, v], i) => { x.fillStyle = '#aab4c3'; x.font = '500 24px sans-serif'; x.fillText(k, 56, 210 + i * 70); x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(v, 260, 214 + i * 70); });
     x.fillStyle = '#cfd6df'; x.font = '500 20px sans-serif'; x.fillText(`${CFG.place} · ${CFG.tagline}`, 56, 590);
     const url = c.toDataURL('image/png');
     $('cardImg').src = url; $('cardDl').href = url; $('cardModal').hidden = false;
@@ -1438,43 +1466,45 @@ addEventListener('keydown', (e) => {
   if (e.key === 'm' || e.key === 'M') toggleMute();
   if (e.key === 'Escape') { $('cardModal').hidden = true; $('rankModal').hidden = true; }
 });
-function toggleMute() { sfx.muted = !sfx.muted; $('muteBtn').classList.toggle('on', sfx.muted); $('muteBtn').textContent = sfx.muted ? '소리 꺼짐' : '소리'; }
+function toggleMute() { sfx.muted = !sfx.muted; $('muteBtn').classList.toggle('on', sfx.muted); $('muteBtn').textContent = sfx.muted ? T('btn.soundOff') : T('btn.sound'); }
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
   if (typeof setDpr === 'function' && dpr > dprCap()) setDpr(dprCap());
 });
 
 // ───────────────────────── 랭킹 (Supabase RPC) ─────────────────────────
-const RANK_ON = !!CFG.rankApi;
-async function api(path, body) {
-  const r = await fetch(`${CFG.rankApi}/${path}`, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok && !(j && j.reason)) throw new Error(`${r.status}`);
-  return j;
+const RANK_ON = !!(CFG.supabaseUrl && CFG.supabaseKey);
+async function rpc(fn, args) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(`${CFG.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: ctl.signal, headers: { apikey: CFG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
+    if (!r.ok) throw new Error(`${r.status}`);
+    return r.json();
+  } finally { clearTimeout(tm); }
 }
 const escH = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let submitted = false;
 async function loadBoard(highlight) {
   const el = $('rankList');
-  if (!RANK_ON) { el.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요.</p>'; return; }
-  el.innerHTML = '<p class="muted">불러오는 중…</p>';
+  if (!RANK_ON) { el.innerHTML = `<p class="muted">${T('rank.off')}</p>`; return; }
+  el.innerHTML = `<p class="muted">${T('rank.loading')}</p>`;
   try {
-    const rows = await api(`board?company=${CFG.code}&limit=20`);
-    el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${Number(r.score).toLocaleString()}</span></li>`).join('')}</ol>` : '<p class="muted">아직 기록이 없어요. 첫 번째로 이름을 올리세요!</p>';
-  } catch (e) { el.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+    const rows = await rpc('smash_top', { p_company: CFG.code, p_limit: 20 });
+    el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${NUM(r.score)}</span></li>`).join('')}</ol>` : `<p class="muted">${T('rank.empty')}</p>`;
+  } catch (e) { el.innerHTML = `<p class="muted">${T('rank.fail')}</p>`; }
 }
 async function submitScore() {
   if (!RANK_ON || submitted) return;
-  const nick = ($('nick').value || '').trim() || '익명 직장인';
+  const nick = ($('nick').value || '').trim() || T('rank.anon');
   try { localStorage.setItem('smash-nick', nick); } catch (e) {}
-  $('submitBtn').disabled = true; $('submitMsg').textContent = '등록 중…';
+  $('submitBtn').disabled = true; $('submitMsg').textContent = T('rank.sending');
   try {
-    const r = await api('score', { company: CFG.code, nick, score: Math.round(score), collapsed: collapsedSite, rank: RANKS[maxRank][0] });
-    if (r.ok) { submitted = true; $('submitMsg').textContent = `${CFG.company} ${r.position}위로 등록했어요!`; loadBoard(nick.slice(0, 12)); }
-    else { $('submitMsg').textContent = r.reason === 'too_fast' ? '잠시 후 다시 등록해 주세요' : '등록하지 못했어요'; $('submitBtn').disabled = false; }
-  } catch (e) { $('submitMsg').textContent = '등록하지 못했어요'; $('submitBtn').disabled = false; }
+    const r = await rpc('smash_submit', { p_company: CFG.code, p_nick: nick, p_score: Math.round(score), p_collapsed: collapsedSite, p_rank: RANKS[maxRank][0] });
+    if (r.ok) { submitted = true; $('submitMsg').textContent = T('rank.done', CFG.company, r.position); loadBoard(nick.slice(0, 12)); }
+    else { $('submitMsg').textContent = r.reason === 'too_fast' ? T('rank.fast') : T('rank.err'); $('submitBtn').disabled = false; }
+  } catch (e) { $('submitMsg').textContent = T('rank.err'); $('submitBtn').disabled = false; }
 }
-function openRank() { $('rankModal').hidden = false; $('rankTitle').textContent = `${CFG.company} 랭킹`; loadBoard(); }
+function openRank() { $('rankModal').hidden = false; $('rankTitle').textContent = T('rank.title', CFG.company); loadBoard(); }
 
 // ───────────────────────── 동 이름표 ─────────────────────────
 let labelsOn = true;
@@ -1524,7 +1554,7 @@ canvas.addEventListener('pointermove', (e) => {
   const el = $('hover');
   if (!b || b.gone) { el.hidden = true; return; }
   const left = b.vox ? Math.round(b.alive / b.vol * 100) : 100;
-  el.innerHTML = `<b>${b.name || (b.site ? CFG.company : '주변 건물')}</b><span>${b.site ? CFG.company + ' · ' : ''}${Math.round(b.h)} m · 남은 ${left}%</span>`;
+  el.innerHTML = `<b>${b.name || (b.site ? CFG.company : T('hover')[0])}</b><span>${b.site ? CFG.company + ' · ' : ''}${T('hover.1', Math.round(b.h), left)}</span>`;
   el.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; el.hidden = false;
 });
 canvas.addEventListener('pointerleave', () => ($('hover').hidden = true));
@@ -1556,10 +1586,10 @@ function setQuality(q, auto) {
   if (sun.castShadow !== want) { sun.castShadow = want; scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); }); }
   if (want && sun.shadow.mapSize.x !== Q.shadow) { sun.shadow.mapSize.set(Q.shadow, Q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
   renderer.shadowMap.needsUpdate = true;
-  FXK = Math.min(Q.fxk, IS_MOBILE ? 0.5 : 1);
+  FXK = Q.fxk;
   setDpr(dprCap());
-  const b = document.getElementById('qBtn'); if (b) b.textContent = `화질 ${Q.name}`;
-  if (auto) toast(`느려서 화질을 '${Q.name}'으로 낮췄어요`, 2200);
+  const b = document.getElementById('qBtn'); if (b) b.textContent = T('quality', Q.name);
+  if (auto) toast(T('qDown', Q.name), 2200);
 }
 const perfLog = [], renderLog = [];
 function frame(now) {
@@ -1583,7 +1613,7 @@ function frame(now) {
     world.position.set(rnd(-1, 1) * Math.min(2.5, a * 0.3), 0, rnd(-1, 1) * Math.min(2.5, a * 0.3));
     groundU.uQC.value.set(quake.P.x, quake.P.z); groundU.uQT.value = quake.t; groundU.uQA.value = quake.M >= 7.5 ? a : 0;
     trees.sway(quake.t, a); shakeAmp = Math.max(shakeAmp, a * 0.25);
-    if (quake.t >= quake.dur) { quake = null; world.position.set(0, 0, 0); groundU.uQA.value = 0; trees.sway(0, 0); }
+    if (quake.t >= quake.dur) { resettle(quake.P.x, quake.P.z, 400); quake = null; world.position.set(0, 0, 0); groundU.uQA.value = 0; trees.sway(0, 0); }
   }
   debris.update(dt);
   fire.update(dt); smoke.update(dt);
@@ -1594,7 +1624,7 @@ function frame(now) {
   decayHeat(dt);
 
   if (simTime - lastHit > 1.3) style = Math.max(0, style - dt * (50 + style * 0.14));
-  if (pend > 0 && (simTime - pendT > 0.18)) { floatText(pendPos.clone().setY(pendPos.y + 6), `+${Math.round(pend).toLocaleString()}`, '#ffe9a8'); pend = 0; pendT = simTime; }
+  if (pend > 0 && (simTime - pendT > 0.18)) { floatText(pendPos.clone().setY(pendPos.y + 6), `+${NUM(Math.round(pend))}`, '#ffe9a8'); pend = 0; pendT = simTime; }
 
   // 떠다니는 글씨
   for (let i = 0; i < floaters.length; i++) {
@@ -1625,20 +1655,22 @@ function frame(now) {
 
 // ───────────────────────── 시작 ─────────────────────────
 ['score', 'rank', 'bar', 'mult', 'rate', 'cnt', 'depth'].forEach((k) => (hudEls[k] = $(`h-${k}`)));
-document.title = `${CFG.company} 부수기 | ${CFG.series}`;
-$('title').textContent = `${CFG.company} 부수기`;
+document.title = `${T('smash', CFG.company)} | ${CFG.series}`;
+$('title').textContent = T('smash', CFG.company);
 $('series').textContent = CFG.series;
-$('startTitle').textContent = `${CFG.company} 부수기`;
+$('startTitle').textContent = T('smash', CFG.company);
 $('startSeries').textContent = CFG.series;
 $('startTag').textContent = CFG.tagline;
-$('credit').innerHTML = `지도 © OpenStreetMap 기여자 (ODbL) · ${CFG.place} ${CFG.company} 건물 ${SITE_COUNT}동 · 비공식 패러디 게임`;
+$('credit').textContent = T('credit', CFG.place, CFG.company, SITE_COUNT);
 buildDock();
 $('nightBtn').onclick = () => setNight(!nightOn);
 $('labelBtn').onclick = () => { labelsOn = !labelsOn; $('labelBtn').classList.toggle('on', labelsOn); };
-$('qBtn').textContent = `화질 ${QUALITY[qLevel].name}`;
+$('qBtn').textContent = T('quality', QUALITY[qLevel].name);
+document.documentElement.lang = LANG;
+document.querySelectorAll('[data-t]').forEach((el) => { const v = T(el.dataset.t); if (typeof v === 'string') el[el.dataset.attr || 'innerHTML'] = v; });
 $('qBtn').onclick = () => setQuality((qLevel + 1) % QUALITY.length);
 $('hubBtn').href = CFG.hub || '../';
-if (SOFTWARE_GL) setTimeout(() => toast('브라우저 하드웨어 가속이 꺼져 있어 느릴 수 있어요 (설정 → 시스템 → 그래픽 가속 사용)', 6000), 1500);
+if (SOFTWARE_GL) setTimeout(() => toast(T('noGpu'), 6000), 1500);
 $('muteBtn').onclick = toggleMute;
 $('resetBtn').onclick = () => location.reload();
 $('cardBtn').onclick = makeCard;
@@ -1650,7 +1682,7 @@ try { $('nick').value = localStorage.getItem('smash-nick') || ''; } catch (e) {}
 $('rankAll').href = (CFG.hub || '../') + '#rank';
 $('startBtn').onclick = () => {
   sfx.init(); $('start').classList.add('gone');
-  setTimeout(() => toast('건물을 눌러 부수세요 · 숫자 1~6으로 도구 변경', 3500), 400);
+  setTimeout(() => toast(T('hint'), 3500), 400);
 };
 window.__smash = { dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
 function warmup() {

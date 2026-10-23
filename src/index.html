@@ -111,27 +111,27 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <body>
 <canvas id="stage"></canvas>
 <div id="left">
-  <div id="brand" class="panel"><div id="series"></div><div id="title"></div><a id="hubBtn" href="../">다른 회사 고르기 →</a></div>
+  <div id="brand" class="panel"><div id="series"></div><div id="title"></div><a id="hubBtn" href="../" data-t="btn.hub">다른 회사 고르기 →</a></div>
   <div id="dock" class="panel"></div>
   <div id="sliderWrap" class="panel" hidden><div class="row"><span id="sliderLabel"></span><span id="sliderVal"></span></div><input id="slider" type="range"></div>
   <div id="tip"></div>
 </div>
 <div id="right" class="panel">
   <div id="h-score">0</div>
-  <div class="rankrow"><span id="h-rank">인턴</span><span id="h-mult">×1.00</span></div>
+  <div class="rankrow"><span id="h-rank"></span><span id="h-mult">×1.00</span></div>
   <div class="barw"><div id="h-bar"></div></div>
-  <div class="stat"><span>회사 파괴율</span><b id="h-rate">0%</b></div>
-  <div class="stat"><span>무너진 건물</span><b id="h-cnt">0</b></div>
-  <div class="stat"><span>판 깊이</span><b id="h-depth">0 km</b></div>
+  <div class="stat"><span data-t="hud.0">회사 파괴율</span><b id="h-rate">0%</b></div>
+  <div class="stat"><span data-t="hud.1">무너진 건물</span><b id="h-cnt">0</b></div>
+  <div class="stat"><span data-t="hud.2">판 깊이</span><b id="h-depth">0 km</b></div>
 </div>
 <div id="bottom">
-  <button class="btn on" id="labelBtn" title="이름표 (L)">이름표</button>
+  <button class="btn on" id="labelBtn" title="L" data-t="btn.label">이름표</button>
   <button class="btn" id="qBtn" title="화질">화질</button>
-  <button class="btn" id="nightBtn" title="밤 (N)">밤</button>
-  <button class="btn" id="muteBtn" title="소리 (M)">소리</button>
-  <button class="btn" id="rankBtn">랭킹</button>
-  <button class="btn" id="resetBtn">처음부터</button>
-  <button class="btn primary" id="cardBtn">인증샷</button>
+  <button class="btn" id="nightBtn" title="N" data-t="btn.night">밤</button>
+  <button class="btn" id="muteBtn" title="M" data-t="btn.sound">소리</button>
+  <button class="btn" id="rankBtn" data-t="btn.rank">랭킹</button>
+  <button class="btn" id="resetBtn" data-t="btn.reset">처음부터</button>
+  <button class="btn primary" id="cardBtn" data-t="btn.card">인증샷</button>
 </div>
 <div id="credit"></div>
 <div id="labels"></div>
@@ -139,12 +139,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div id="hover" hidden></div>
 <div id="toast"></div>
 <div id="flash"></div>
-<div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row" id="submitRow"><input id="nick" maxlength="12" placeholder="랭킹에 올릴 이름 (12자)"><button class="btn primary" id="submitBtn">랭킹 등록</button><span id="submitMsg"></span></div><div class="row"><span>저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png">저장</a><button class="btn" id="cardClose">닫기</button></div></div></div>
-<div id="rankModal" hidden><div class="box panel"><div class="rhead"><b id="rankTitle">랭킹</b><a id="rankAll" href="../#rank">회사별 순위 →</a><button class="btn" id="rankClose">닫기</button></div><div id="rankList"></div></div></div>
+<div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row" id="submitRow"><input id="nick" maxlength="12" placeholder="랭킹에 올릴 이름 (12자)" data-t="nickPh" data-attr="placeholder"><button class="btn primary" id="submitBtn" data-t="btn.submit">랭킹 등록</button><span id="submitMsg"></span></div><div class="row"><span data-t="saveHint">저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png" data-t="btn.save">저장</a><button class="btn" id="cardClose" data-t="btn.close">닫기</button></div></div></div>
+<div id="rankModal" hidden><div class="box panel"><div class="rhead"><b id="rankTitle">랭킹</b><a id="rankAll" href="../#rank" data-t="btn.allRank">회사별 순위 →</a><button class="btn" id="rankClose" data-t="btn.close">닫기</button></div><div id="rankList"></div></div></div>
 <div id="start"><div class="startbox">
   <div id="startSeries"></div><div id="startTitle"></div><div id="startTag"></div>
-  <button class="btn primary" id="startBtn">출근하기</button>
-  <div class="how">건물을 눌러 부수기 · 끌어서 회전 · 휠/두 손가락 확대<br>도구를 바꿔 가며 부수면 배율이 붙고 직급이 오릅니다</div>
+  <button class="btn primary" id="startBtn" data-t="start">출근하기</button>
+  <div class="how" data-t="how"></div>
 </div></div>
 <script id="config-data" type="application/json">/*CONFIG*/</script>
 <script id="scene-data" type="application/json">/*SCENE*/</script>

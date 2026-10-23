@@ -124,8 +124,8 @@ for bid, t, r in cands:
 cs = [cen(b['p']) for b in buildings]
 drop = set()
 for i, o in enumerate(buildings):
-    for j, c in enumerate(cs):
-        if i != j and buildings[j]['a'] < o['a'] and inside(c, o['p']): drop.add(i); break
+    inner = sum(buildings[j]['a'] for j, c in enumerate(cs) if i != j and buildings[j]['a'] < o['a'] and inside(c, o['p']))
+    if inner > o['a'] * 0.3: drop.add(i)  # 안에 든 건물이 면적 30% 넘게 차지하면 윤곽선으로 보고 뺌(애플 링 같은 안뜰 건물은 남김)
 buildings = [b for i, b in enumerate(buildings) if i not in drop]
 for b in buildings: b.pop('a')
 
@@ -136,10 +136,11 @@ if len(buildings) > MAXB:
     buildings = site_b + rest[:MAXB - len(site_b)]
 site_b = sorted([b for b in buildings if b['s']], key=lambda b: (round(cen(b['p'])[1] / 60), cen(b['p'])[0]))
 k = 0
-if len(site_b) == 1 and not site_b[0]['n']: site_b[0]['n'] = '본관'
+NAMES = {'ko': ('본관', '{}동'), 'en': ('Main Bldg', 'Bldg {}'), 'ja': ('本館', '{}号館'), 'zh': ('主楼', '{}号楼')}[cfg.get('lang', 'ko')]
+if len(site_b) == 1 and not site_b[0]['n']: site_b[0]['n'] = NAMES[0]
 for b in site_b:
     if not b['n']:
-        k += 1; b['n'] = f'{k}동'
+        k += 1; b['n'] = NAMES[1].format(k)
 
 ROADW = {'motorway': 22, 'motorway_link': 9, 'trunk': 20, 'trunk_link': 9, 'primary': 18, 'primary_link': 9, 'secondary': 14,
          'secondary_link': 8, 'tertiary': 11, 'tertiary_link': 7, 'residential': 7, 'unclassified': 7, 'service': 5, 'busway': 7,

@@ -1,0 +1,17 @@
+{
+ "code": "tesla-texas",
+ "region": "us",
+ "lang": "en",
+ "group": "Auto",
+ "company": "Tesla Gigafactory Texas",
+ "place": "Austin",
+ "site": [
+  [
+   "way",
+   990257143
+  ]
+ ],
+ "tagline": "Autopilot engaged: straight through the wall",
+ "series": "Office Smash",
+ "alias": "tesla gigafactory texas austin giga"
+}

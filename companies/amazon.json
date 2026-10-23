@@ -1,0 +1,17 @@
+{
+ "code": "amazon",
+ "region": "us",
+ "lang": "en",
+ "group": "Big Tech",
+ "company": "Amazon Spheres",
+ "place": "Seattle",
+ "site": [
+  [
+   "way",
+   868099742
+  ]
+ ],
+ "tagline": "Return to sender: my workload",
+ "series": "Office Smash",
+ "alias": "amazon spheres seattle aws"
+}
