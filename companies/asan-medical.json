@@ -1,0 +1,15 @@
+{
+ "code": "asan-medical",
+ "group": "병원",
+ "company": "서울아산병원",
+ "place": "송파 풍납동",
+ "site": [
+  [
+   "way",
+   503505209
+  ]
+ ],
+ "tagline": "외래 대기 3시간, 부수는 건 3초",
+ "series": "정신나간 직장인의 회사 부수기",
+ "alias": "아산병원 서울아산병원 Asan Medical Center 풍납동 송파 현대"
+}

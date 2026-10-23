@@ -1,0 +1,17 @@
+{
+ "code": "anthropic",
+ "region": "us",
+ "lang": "en",
+ "group": "AI",
+ "company": "Anthropic HQ",
+ "place": "San Francisco",
+ "site": [
+  [
+   "way",
+   113505811
+  ]
+ ],
+ "tagline": "Helpful, harmless, and out of office",
+ "series": "Office Smash",
+ "alias": "anthropic claude 500 howard street foundry square san francisco"
+}

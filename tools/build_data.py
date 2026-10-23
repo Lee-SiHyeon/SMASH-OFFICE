@@ -136,7 +136,7 @@ if len(buildings) > MAXB:
     buildings = site_b + rest[:MAXB - len(site_b)]
 site_b = sorted([b for b in buildings if b['s']], key=lambda b: (round(cen(b['p'])[1] / 60), cen(b['p'])[0]))
 k = 0
-NAMES = {'ko': ('본관', '{}동'), 'en': ('Main Bldg', 'Bldg {}'), 'ja': ('本館', '{}号館'), 'zh': ('主楼', '{}号楼')}[cfg.get('lang', 'ko')]
+NAMES = {'ko': ('본관', '{}동'), 'en': ('Main Bldg', 'Bldg {}'), 'ja': ('本館', '{}号館'), 'zh': ('主楼', '{}号楼'), 'vi': ('Tòa chính', 'Tòa {}')}[cfg.get('lang', 'ko')]
 if len(site_b) == 1 and not site_b[0]['n']: site_b[0]['n'] = NAMES[0]
 for b in site_b:
     if not b['n']:

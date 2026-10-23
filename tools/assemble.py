@@ -19,10 +19,11 @@ BASE = os.environ.get('BASE_URL', 'https://lee-sihyeon.github.io/SMASH-OFFICE/')
 safe = lambda s: s.replace('</', '<\\/')
 codes = sys.argv[1:] or sorted(p.stem for p in (root / 'companies').glob('*.json'))
 for code in codes:
+    if not (root / f'data/{code}.json').exists(): continue  # 데이터 준비 전
     cfg = json.loads((root / f'companies/{code}.json').read_text())
     lang = cfg.setdefault('lang', 'ko'); region = cfg.get('region', 'kr')
     cfg['hub'] = '../' if region == 'kr' else f'../{region}/'
-    cfg.setdefault('antipode', {'ko': '우루과이 앞바다(남대서양)', 'en': 'the other side of the planet', 'ja': '地球の裏側', 'zh': '地球另一端'}[lang])
+    cfg.setdefault('antipode', {'ko': '우루과이 앞바다(남대서양)', 'en': 'the other side of the planet', 'ja': '地球の裏側', 'zh': '地球另一端', 'vi': 'bên kia Trái Đất'}[lang])
     cfg.update(json.loads((root / 'site.json').read_text()))
     url = f'{BASE}{code}/'
     html = tpl.replace('LG사이언스파크', cfg['company']).replace('https://lee-sihyeon.github.io/SMASH-LGSP/og.png', f'{url}og.png') \
@@ -31,7 +32,8 @@ for code in codes:
     if lang != 'ko':
         D = {'en': (f"Smash {cfg['company']} in 3D — an unofficial parody stress-relief game.", f"Smash {cfg['company']} — {cfg['series']}"),
              'ja': (f"{cfg['company']}を3Dでぶっ壊すストレス解消ゲーム(非公式パロディ)。", f"{cfg['company']}をぶっ壊せ — {cfg['series']}"),
-             'zh': (f"3D拆掉{cfg['company']}的解压游戏(非官方恶搞)。", f"拆了{cfg['company']} — {cfg['series']}")}[lang]
+             'zh': (f"3D拆掉{cfg['company']}的解压游戏(非官方恶搞)。", f"拆了{cfg['company']} — {cfg['series']}"),
+             'vi': (f"Đập {cfg['company']} bằng 3D — game nhại giải tỏa căng thẳng, không chính thức.", f"Đập {cfg['company']} — {cfg['series']}")}[lang]
         import re as _re
         html = _re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{D[0]}">', html)
         html = _re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{D[1]}">', html)

@@ -1,0 +1,23 @@
+{
+ "code": "goldman",
+ "region": "us",
+ "lang": "en",
+ "group": "Finance",
+ "company": "Goldman Sachs Tower",
+ "place": "New York",
+ "site": [
+  [
+   "way",
+   75309475
+  ]
+ ],
+ "tagline": "Bonus season is a myth",
+ "series": "Office Smash",
+ "alias": "goldman sachs 200 west street new york wall street bank",
+ "override": {
+  "Goldman Sachs Tower": [
+   228,
+   44
+  ]
+ }
+}

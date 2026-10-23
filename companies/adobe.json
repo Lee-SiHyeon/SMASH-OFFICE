@@ -1,0 +1,31 @@
+{
+ "code": "adobe",
+ "region": "us",
+ "lang": "en",
+ "group": "Big Tech",
+ "company": "Adobe HQ",
+ "place": "San Jose",
+ "site": [
+  [
+   "way",
+   315707781
+  ],
+  [
+   "way",
+   1506416882
+  ]
+ ],
+ "tagline": "Ctrl+Z my career choices",
+ "series": "Office Smash",
+ "alias": "adobe world headquarters san jose photoshop park avenue almaden",
+ "override": {
+  "Adobe World Headquarters": [
+   74,
+   18
+  ],
+  "Adobe Systems North Tower": [
+   85,
+   18
+  ]
+ }
+}

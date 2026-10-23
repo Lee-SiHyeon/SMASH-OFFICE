@@ -2,6 +2,8 @@
 <html lang="/*LANG*/">
 <head>
 <meta charset="utf-8">
+<script>if(!/\/$|\.html$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">')</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>/*TITLE*/</title>
 <meta name="description" content="/*DESC*/">
@@ -124,6 +126,8 @@ function render() {
 function fit() { const pts = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
 render(); fit();
 const SITE = /*SITE*/;
+// 광고: 승인된 도메인(lifehackailab.com 하위)에서만 자동 광고를 켬. 게임 화면에는 넣지 않음
+if (SITE.adClient && location.hostname.endsWith(SITE.adHost)) { const a = document.createElement('script'); a.async = true; a.crossOrigin = 'anonymous'; a.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}`; document.head.appendChild(a); }
 const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
 async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
 let period = 'today', rankCache = null;

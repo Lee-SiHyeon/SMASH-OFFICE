@@ -1,0 +1,23 @@
+{
+ "code": "vn-bitexco",
+ "region": "vn",
+ "lang": "vi",
+ "group": "Bất động sản",
+ "company": "Bitexco Financial Tower",
+ "place": "Quận 1, TP.HCM",
+ "site": [
+  [
+   "way",
+   804073951
+  ]
+ ],
+ "tagline": "KPI bay cao hơn cả sân đỗ trực thăng",
+ "series": "Đập Công Ty",
+ "alias": "bitexco financial tower tháp tài chính bitexco quận 1 district 1 sài gòn saigon hcmc",
+ "override": {
+  "Bitexco Financial Tower": [
+   262,
+   68
+  ]
+ }
+}

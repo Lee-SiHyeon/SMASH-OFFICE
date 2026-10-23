@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<script>if(!/\/$|\.html$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">')</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23ff6a2b%22/%3E%3Cpath d=%22M8 24V12l4-3v15M14 24V7l5 3v14M21 24V14l3 2v8%22 stroke=%22white%22 stroke-width=%222%22 fill=%22none%22/%3E%3C/svg%3E">
+<meta name="description" content="Đập LG Electronics Hải Phòng bằng 3D — game nhại giải tỏa căng thẳng, không chính thức.">
+<meta property="og:title" content="Đập LG Electronics Hải Phòng — Đập Công Ty">
+<meta property="og:description" content="Life's Good — trừ sáng thứ Hai">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE/vn-lg-haiphong/">
+<meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE/vn-lg-haiphong/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<title>회사 부수기</title>
+<style>
+:root{--bg:#0d1118;--panel:rgba(16,21,30,.78);--line:rgba(255,255,255,.12);--fg:#f2f5f9;--muted:#9aa6b6;--accent:#ff6a2b;--accent2:#21d07a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#left{position:fixed;left:16px;top:16px;width:236px;display:flex;flex-direction:column;gap:10px;z-index:5}
+#brand{padding:12px 14px}
+#series{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+#title{font-size:21px;font-weight:900;margin-top:2px;letter-spacing:-.02em}
+#dock{padding:6px;display:flex;flex-direction:column;gap:4px}
+.tool{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left}
+.tool:hover{background:rgba(255,255,255,.06)}
+.tool.on{background:rgba(255,106,43,.18);border-color:var(--accent)}
+.tool .ic{width:22px;height:22px;flex:none}
+.tool .nm{flex:1}.tool .sh{display:none}
+.tool kbd{font:500 11px ui-monospace,monospace;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+#sliderWrap{padding:10px 12px}
+#sliderWrap .row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+#sliderVal{color:var(--fg);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--accent)}
+#tip{font-size:12px;color:#e6ebf1;padding:8px 12px;line-height:1.45;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+#right{position:fixed;right:16px;top:16px;width:218px;padding:12px 14px;z-index:5}
+#h-score{font-size:30px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rankrow{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
+#h-rank{padding:3px 10px;border-radius:999px;font-weight:800;font-size:14px;color:#fff;transition:background .3s}
+#h-mult{font-weight:700;color:var(--muted);font-size:13px}
+.barw{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:10px}
+#h-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ffd166);transition:width .15s}
+.stat{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--muted)}
+.stat b{color:var(--fg);font-variant-numeric:tabular-nums}
+#bottom{position:fixed;right:16px;bottom:16px;display:flex;gap:8px;z-index:5}
+.btn{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:9px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px)}
+.btn:hover{border-color:rgba(255,255,255,.3)}
+.btn.on{border-color:var(--accent);color:#ffd2bf}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#hubBtn{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#ffb38f;text-decoration:none}
+#hubBtn:hover{text-decoration:underline}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.blabel{position:absolute;left:0;top:0;padding:3px 8px;border-radius:7px;background:rgba(14,18,26,.72);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:700;white-space:nowrap;will-change:transform}
+.blabel::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-4px;border:4px solid transparent;border-top-color:rgba(14,18,26,.72);border-bottom:0}
+#hover{position:fixed;left:0;top:0;z-index:9;pointer-events:none;background:rgba(10,14,22,.9);border:1px solid var(--line);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+#hover[hidden]{display:none}#hover span{color:var(--muted);font-size:11px}
+#credit{position:fixed;left:16px;bottom:10px;font-size:11px;color:rgba(255,255,255,.55);z-index:4;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+#toast{position:fixed;left:50%;top:22px;transform:translate(-50%,-10px);padding:10px 18px;border-radius:999px;background:rgba(10,14,22,.85);border:1px solid var(--line);font-weight:800;font-size:16px;opacity:0;transition:.25s;z-index:8;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#floaters{position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden}
+.float{position:absolute;left:0;top:0;font-weight:900;font-size:17px;white-space:nowrap;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 10px rgba(0,0,0,.4);will-change:transform}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:7}
+#start{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,rgba(30,20,14,.55),rgba(8,10,16,.92));transition:opacity .5s}
+#start.gone{opacity:0;pointer-events:none}
+.startbox{text-align:center;padding:0 16px;max-width:560px}
+#startSeries{color:var(--accent);font-weight:800;font-size:14px}
+#startTitle{font-size:clamp(38px,9vw,72px);font-weight:900;letter-spacing:-.04em;margin:8px 0 6px;line-height:1.05}
+#startTag{color:#d5dbe3;font-size:17px;margin-bottom:26px}
+#startBtn{font-size:19px;padding:14px 34px;border-radius:14px}
+.how{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.7}
+#cardModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.7);padding:16px}
+#cardModal[hidden],#rankModal[hidden]{display:none}
+#rankModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.6);padding:16px}
+#rankModal .box{width:100%;max-width:420px;max-height:80vh;overflow:auto;padding:16px}
+.rhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}.rhead b{flex:1;font-size:18px}.rhead a{color:#ffb38f;font-size:12px;font-weight:700;text-decoration:none}
+#rankList ol{list-style:none;margin:0;padding:0}
+#rankList li{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line);font-size:14px}
+#rankList li.me{background:rgba(255,106,43,.15);border-radius:8px}
+#rankList .no{width:22px;color:var(--muted);font-weight:800;text-align:right}
+#rankList b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rankList .rk{font-size:11px;color:var(--muted)}
+#rankList .sc{font-weight:800;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted);font-size:13px}
+#nick{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:9px 11px;font:inherit;font-size:14px}
+#submitRow[hidden]{display:none}#submitMsg{flex:none!important;font-size:12px;color:#ffd2bf!important}
+#cardModal .box{max-width:760px;width:100%;padding:14px}
+#cardImg{width:100%;border-radius:10px;display:block}
+#cardModal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;align-items:center}
+#cardModal .row span{flex:1;font-size:12px;color:var(--muted)}
+@media (max-width:760px){
+  #left{left:0;right:0;top:auto;bottom:0;width:auto;gap:6px;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
+  #brand{position:fixed;left:10px;top:10px;padding:8px 10px}
+  #title{font-size:16px}#series{font-size:10px}
+  #dock{flex-direction:row;overflow-x:auto;gap:4px}
+  .tool{flex-direction:column;gap:2px;padding:6px 4px;min-width:62px;font-size:11px;text-align:center}
+  .tool kbd,.tool .nm{display:none}.tool .sh{display:block;white-space:nowrap}
+  .tool{min-width:0;flex:1}
+  #tip{display:none}
+  #right{top:10px;right:10px;width:150px;padding:8px 10px}
+  #h-score{font-size:20px}.stat{font-size:11px}
+  #bottom{top:auto;bottom:auto;right:10px;top:206px;flex-direction:column}
+  #bottom .btn{padding:7px 9px;font-size:12px}
+  #hubBtn{font-size:11px;margin-top:3px}
+  .blabel{font-size:10px;padding:2px 6px}
+  #credit{display:none}
+  #toast{font-size:13px;top:auto;bottom:150px}
+}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="left">
+  <div id="brand" class="panel"><div id="series"></div><div id="title"></div><a id="hubBtn" href="../" data-t="btn.hub">다른 회사 고르기 →</a></div>
+  <div id="dock" class="panel"></div>
+  <div id="sliderWrap" class="panel" hidden><div class="row"><span id="sliderLabel"></span><span id="sliderVal"></span></div><input id="slider" type="range"></div>
+  <div id="tip"></div>
+</div>
+<div id="right" class="panel">
+  <div id="h-score">0</div>
+  <div class="rankrow"><span id="h-rank"></span><span id="h-mult">×1.00</span></div>
+  <div class="barw"><div id="h-bar"></div></div>
+  <div class="stat"><span data-t="hud.0">회사 파괴율</span><b id="h-rate">0%</b></div>
+  <div class="stat"><span data-t="hud.1">무너진 건물</span><b id="h-cnt">0</b></div>
+  <div class="stat"><span data-t="hud.2">판 깊이</span><b id="h-depth">0 km</b></div>
+</div>
+<div id="bottom">
+  <button class="btn on" id="labelBtn" title="L" data-t="btn.label">이름표</button>
+  <button class="btn" id="qBtn" title="화질">화질</button>
+  <button class="btn" id="nightBtn" title="N" data-t="btn.night">밤</button>
+  <button class="btn" id="muteBtn" title="M" data-t="btn.sound">소리</button>
+  <button class="btn" id="rankBtn" data-t="btn.rank">랭킹</button>
+  <button class="btn" id="resetBtn" data-t="btn.reset">처음부터</button>
+  <button class="btn primary" id="cardBtn" data-t="btn.card">인증샷</button>
+</div>
+<div id="credit"></div>
+<div id="labels"></div>
+<div id="floaters"></div>
+<div id="hover" hidden></div>
+<div id="toast"></div>
+<div id="flash"></div>
+<div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row" id="submitRow"><input id="nick" maxlength="12" placeholder="랭킹에 올릴 이름 (12자)" data-t="nickPh" data-attr="placeholder"><button class="btn primary" id="submitBtn" data-t="btn.submit">랭킹 등록</button><span id="submitMsg"></span></div><div class="row"><span data-t="saveHint">저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png" data-t="btn.save">저장</a><button class="btn" id="cardClose" data-t="btn.close">닫기</button></div></div></div>
+<div id="rankModal" hidden><div class="box panel"><div class="rhead"><b id="rankTitle">랭킹</b><a id="rankAll" href="../#rank" data-t="btn.allRank">회사별 순위 →</a><button class="btn" id="rankClose" data-t="btn.close">닫기</button></div><div id="rankList"></div></div></div>
+<div id="start"><div class="startbox">
+  <div id="startSeries"></div><div id="startTitle"></div><div id="startTag"></div>
+  <button class="btn primary" id="startBtn" data-t="start">출근하기</button>
+  <div class="how" data-t="how"></div>
+</div></div>
+<script id="config-data" type="application/json">{"code": "vn-lg-haiphong", "region": "vn", "lang": "vi", "group": "Điện tử", "company": "LG Electronics Hải Phòng", "place": "Tràng Duệ, Hải Phòng", "site": [["way", 916477949]], "tagline": "Life's Good — trừ sáng thứ Hai", "series": "Đập Công Ty", "alias": "lg lge lg electronics hải phòng hai phong tràng duệ trang due an dương", "hub": "../vn/", "antipode": "bên kia Trái Đất", "supabaseUrl": "https://eardnytyohdekpvkzmid.supabase.co", "supabaseKey": "sb_publishable_2X8Cl7S9KwHjyNgkxnr0wg_zdsq3eEE", "adClient": "ca-pub-1334738005365868", "adHost": "lifehackailab.com"}</script>
+<script id="scene-data" type="application/json">{"center":[20.860943433333333,106.57226411666666],"radius":718.6285098276716,"site":[[[5.8,-233.5],[-89.7,-315.2],[-431.5,78.7],[-48.9,406.0],[268.0,51.5],[296.3,12.5]]],"buildings":[{"id":770907143,"n":"Tòa 2","h":56.0,"lv":8,"s":1,"p":[[33.0,-144.6],[208.7,3.2],[13.6,231.8],[-162.1,83.9]]},{"id":770907144,"n":"Tòa 3","h":56.0,"lv":8,"s":1,"p":[[-279.7,164.4],[-219.7,94.1],[-14.8,266.6],[-74.9,337.0]]},{"id":770907145,"n":"Tòa 1","h":56.0,"lv":8,"s":1,"p":[[-369.9,85.8],[-311.4,16.8],[-233.3,82.1],[-291.9,151.1]]},{"id":770907149,"n":"","h":35.0,"lv":5,"s":0,"p":[[-310.6,255.7],[-145.1,395.8],[-217.3,481.1],[-384.0,342.1]]}],"roads":[{"w":20,"p":[[293.3,33.4],[80.9,276.9],[60.0,301.3],[51.2,310.2],[-42.2,410.5],[-54.4,423.8],[-189.0,581.7],[-320.4,730.3],[-513.1,943.3],[-584.8,1028.0],[-629.2,1088.6],[-668.7,1149.0],[-719.9,1230.4]]},{"w":20,"p":[[628.8,-665.5],[539.4,-564.2],[518.4,-538.8],[495.0,-507.4],[480.6,-480.8],[464.2,-448.6],[451.2,-412.7],[442.8,-376.7],[412.1,-270.0],[379.2,-145.3],[347.6,-55.6],[339.4,-38.1],[322.9,-9.6],[293.3,33.4]]},{"w":7,"p":[[-26.0,423.2],[-42.2,410.5],[-56.2,399.8],[-60.0,396.9],[-314.9,191.0],[-321.7,184.6],[-441.3,83.1],[-557.5,-18.1],[-608.7,-62.6],[-651.1,-98.3],[-715.1,-152.0],[-716.8,-153.4],[-913.5,-318.1],[-1006.1,-395.6],[-1191.3,-555.9],[-1226.1,-585.7]]},{"w":7,"p":[[690.5,309.1],[922.0,304.2],[928.1,304.0],[968.1,300.7],[1061.5,295.3],[1096.3,296.9],[1140.1,298.9],[1186.3,301.2],[1193.4,302.1],[1235.7,306.1],[1240.9,305.2],[1279.9,307.5],[1302.5,307.0],[1320.7,306.5],[1363.0,302.4],[1414.1,301.1],[1459.3,302.8],[1530.7,310.5],[1597.1,314.9],[1690.6,311.8],[1694.7,310.6],[1697.5,306.6],[1715.4,239.9],[1717.3,232.6],[1722.7,222.7],[1731.3,217.1],[1736.3,217.2],[1741.9,217.3],[1788.5,226.8],[1827.6,228.5],[1875.4,228.1]]},{"w":7,"p":[[677.4,453.3],[607.7,512.5],[568.3,540.5],[527.3,583.3],[484.3,632.5],[449.6,674.2],[376.8,762.9],[361.6,779.1]]},{"w":7,"p":[[-91.5,718.6],[-102.6,753.2],[-121.3,806.4],[-128.7,823.7],[-136.1,838.5],[-147.3,862.3],[-150.1,870.1],[-156.8,888.8],[-159.2,896.7],[-168.9,928.3],[-170.3,930.3],[-172.7,930.7],[-181.2,929.7],[-237.5,915.6],[-250.5,911.4],[-265.9,906.0],[-270.0,905.3],[-273.8,905.3],[-277.0,906.7],[-280.1,911.0]]},{"w":7,"p":[[-272.4,699.6],[-198.0,702.3],[-128.0,709.4],[-114.1,711.6],[-103.5,714.1],[-91.5,718.6],[-45.2,731.6],[-22.5,738.8],[-17.8,740.3],[4.5,747.4],[70.6,765.1],[153.0,790.1],[161.2,793.0],[160.3,796.5],[140.6,864.4],[134.5,885.4],[121.4,925.8],[93.6,1019.7],[81.4,1056.9],[78.7,1062.7],[76.0,1066.7],[75.1,1071.0],[72.0,1107.7]]},{"w":5,"p":[[-200.6,562.4],[-203.1,560.4],[-260.0,513.8],[-430.8,374.2],[-438.0,372.5],[-445.8,377.5],[-495.5,435.1],[-501.1,438.7],[-507.8,447.0],[-525.2,470.7]]},{"w":5,"p":[[-292.5,666.1],[-294.4,664.3],[-319.3,644.6],[-350.0,620.8],[-404.3,577.3],[-525.2,470.7],[-529.5,468.4],[-534.6,469.2],[-542.4,477.2],[-573.9,514.6],[-576.1,518.5],[-576.1,523.2],[-572.5,526.8],[-503.0,586.9],[-398.7,673.7],[-374.5,691.8],[-370.6,693.1],[-366.2,692.9],[-356.5,688.1],[-319.3,644.6]]},{"w":7,"p":[[840.4,140.5],[713.7,-2.4]]},{"w":7,"p":[[-198.0,702.3],[-203.1,741.3],[-202.3,744.9],[-198.9,746.8]]},{"w":7,"p":[[277.2,23.0],[232.1,-8.9],[35.3,-172.9],[-53.1,-246.5]]},{"w":7,"p":[[232.1,-8.9],[5.1,259.0],[-1.2,266.4],[-65.9,343.1],[-69.2,346.2],[-73.4,348.1],[-78.0,348.7],[-82.5,347.7],[-86.4,345.5],[-295.9,168.9],[-303.3,162.6],[-384.2,94.4],[-386.3,91.3],[-387.4,87.6],[-387.3,83.8],[-385.9,80.2],[-383.6,77.2],[-311.0,-6.4]]},{"w":7,"p":[[1067.6,-91.3],[1027.4,-42.0],[974.1,5.8],[914.7,63.1],[904.8,73.9],[840.4,140.5],[763.9,220.6],[723.8,264.7],[690.5,309.1]]},{"w":20,"p":[[-704.2,1239.5],[-654.2,1157.2],[-573.1,1040.5],[-539.2,991.9],[-405.3,845.1],[-272.4,699.6],[-238.2,659.3],[-154.6,570.3],[-87.4,492.6],[-38.7,437.6],[-26.0,423.2],[34.9,349.8],[89.3,290.7],[191.5,177.2],[279.0,77.1],[330.2,10.2],[361.9,-47.4],[386.0,-101.1],[412.2,-182.7],[432.6,-278.8],[465.7,-409.9],[480.6,-446.2],[501.2,-486.0],[531.0,-532.4],[552.3,-555.7],[643.6,-653.0],[707.7,-722.0]]},{"w":7,"p":[[-723.6,-141.4],[-715.1,-152.0]]},{"w":7,"p":[[-617.6,-52.9],[-608.7,-62.6]]},{"w":7,"p":[[-1235.2,-575.2],[-1003.4,-376.8],[-922.5,-307.5],[-915.3,-301.4],[-900.0,-288.4],[-871.5,-264.0],[-723.6,-141.4],[-617.6,-52.9],[-449.8,93.0],[-329.8,193.9],[-322.6,200.0],[-70.2,408.6],[-67.1,411.6],[-54.4,423.8],[-38.7,437.6]]},{"w":9,"p":[[347.6,-55.6],[361.9,-47.4]]},{"w":5,"p":[[-740.2,306.1],[-751.2,320.1],[-751.1,324.3],[-747.2,327.8],[-689.5,374.5]]},{"w":5,"p":[[-690.2,147.8],[-578.8,243.9]]},{"w":7,"p":[[-699.7,117.7],[-725.9,114.2],[-752.8,111.0],[-768.4,108.7],[-790.7,105.7],[-802.0,104.7],[-817.6,103.3],[-891.1,98.0],[-901.3,97.0],[-909.1,95.7]]},{"w":5,"p":[[-589.2,150.0],[-535.5,192.9]]},{"w":7,"p":[[-897.9,620.4],[-894.9,640.3],[-836.3,1032.2],[-832.5,1041.8],[-823.9,1050.8],[-713.5,1140.2],[-704.2,1143.5],[-695.9,1144.9],[-688.7,1142.8],[-681.3,1139.7],[-597.8,1017.3],[-524.9,923.4],[-481.5,875.4],[-292.5,666.1],[-200.6,562.4],[-67.1,411.6],[-56.2,399.8],[37.2,297.8],[44.0,290.0],[267.2,37.4],[277.2,23.0],[288.5,6.7],[313.1,-33.1],[346.1,-99.5],[362.0,-148.8],[377.0,-204.4],[412.8,-356.6],[424.9,-407.9],[440.1,-453.0],[456.4,-488.0],[471.3,-510.7],[481.9,-527.1],[509.8,-560.2],[549.3,-601.5],[619.8,-675.3],[697.1,-766.0]]},{"w":7,"p":[[412.8,-356.6],[130.9,-593.3],[-110.5,-794.9],[-123.4,-805.7]]},{"w":7,"p":[[-53.1,-246.5],[-61.6,-258.5],[-69.7,-270.1],[-112.5,-306.1]]},{"w":7,"p":[[-61.6,-258.5],[-289.5,11.6]]},{"w":7,"p":[[-897.9,620.4],[-875.1,593.4],[-807.9,514.2],[-785.5,487.8],[-772.9,472.8],[-734.8,428.0],[-707.5,395.8],[-689.5,374.5],[-578.8,243.9],[-535.5,192.9],[-449.8,93.0],[-441.3,83.1],[-112.5,-306.1],[-100.1,-319.7],[-61.1,-366.0],[130.9,-593.3],[372.8,-878.7]]},{"w":7,"p":[[5.1,259.0],[-192.9,92.8],[-216.0,73.4],[-289.5,11.6],[-311.0,-6.4]]},{"w":7,"p":[[-1.2,266.4],[37.2,297.8],[51.2,310.2]]},{"w":7,"p":[[60.0,301.3],[44.0,290.0],[5.1,259.0]]},{"w":7,"p":[[35.3,-172.9],[-192.9,92.8]]},{"w":7,"p":[[-110.5,-794.9],[-233.5,-654.5]]},{"w":7,"p":[[-216.0,73.4],[-295.9,168.9]]},{"w":7,"p":[[-322.6,200.0],[-314.9,191.0],[-295.9,168.9]]},{"w":7,"p":[[-329.8,193.9],[-321.7,184.6],[-303.3,162.6]]},{"w":5,"p":[[549.3,-601.5],[477.1,-669.7],[433.6,-710.7],[394.2,-748.0]]},{"w":5,"p":[[471.3,-510.7],[393.0,-584.6],[364.1,-611.8],[334.8,-639.5],[313.6,-659.5]]},{"w":5,"p":[[-220.1,-421.8],[-100.1,-319.7]]},{"w":5,"p":[[-726.4,-458.8],[-599.7,-611.0],[-588.0,-600.0],[-479.1,-507.2],[-410.9,-450.3],[-407.5,-449.3],[-404.6,-449.5],[-401.7,-451.2],[-362.0,-498.1],[-233.5,-654.5]]},{"w":5,"p":[[-242.1,-395.6],[-362.0,-498.1]]},{"w":5,"p":[[-599.7,-611.0],[-637.7,-644.4]]},{"w":5,"p":[[-588.0,-600.0],[-558.3,-633.9],[-491.6,-711.2],[-450.8,-760.7],[-446.7,-763.8],[-442.7,-764.5],[-438.9,-763.0],[-390.4,-723.2],[-370.2,-706.5],[-335.8,-677.0]]},{"w":5,"p":[[-491.6,-711.2],[-384.6,-619.2]]},{"w":5,"p":[[-303.9,-714.9],[-354.9,-759.3],[-357.0,-759.6],[-358.5,-759.5],[-360.3,-758.5],[-390.4,-723.2]]},{"w":5,"p":[[-303.9,-714.9],[-233.5,-654.5]]},{"w":5,"p":[[-92.6,-573.6],[-129.1,-530.1],[-220.1,-421.8],[-242.1,-395.6],[-487.3,-103.7],[-491.0,-101.6],[-494.4,-101.4],[-497.4,-103.0],[-630.7,-213.3],[-671.3,-246.9],[-687.4,-260.3],[-719.2,-286.6]]},{"w":5,"p":[[-687.4,-260.3],[-479.1,-507.2],[-384.6,-619.2],[-335.8,-677.0],[-303.9,-714.9]]},{"w":5,"p":[[-681.5,-193.3],[-716.8,-153.4]]},{"w":5,"p":[[-630.7,-213.3],[-681.5,-193.3]]},{"w":5,"p":[[-681.5,-193.3],[-671.3,-246.9]]},{"w":7,"p":[[-140.2,582.4],[-23.8,452.2],[-13.4,434.4]]},{"w":5,"p":[[-350.0,620.8],[-331.3,598.0],[-292.2,551.5],[-260.0,513.8]]},{"w":7,"p":[[-38.7,437.6],[-23.8,452.2],[86.4,545.8],[202.3,644.3],[224.6,663.0],[361.6,779.1],[453.6,855.9]]},{"w":7,"p":[[217.2,628.8],[202.3,644.3],[170.5,679.8],[169.0,680.6],[167.2,680.8],[165.2,680.3],[163.5,679.3],[153.0,672.7],[149.8,671.1],[146.2,670.0],[23.5,654.7],[8.7,653.9],[-7.5,653.7],[-11.2,653.7],[-25.5,653.9],[-47.1,654.7],[-55.1,653.4],[-62.2,649.3],[-140.2,582.4],[-154.6,570.3]]},{"w":7,"p":[[468.6,840.4],[376.8,762.9],[234.6,644.2],[217.2,628.8],[100.6,530.1],[-13.4,434.4],[-26.0,423.2]]},{"w":5,"p":[[-61.1,-366.0],[-114.1,-409.3],[-114.9,-413.1],[-114.1,-416.0],[-54.1,-485.3],[-35.7,-509.6],[-35.1,-513.7],[-36.5,-516.8],[-83.4,-558.7],[-85.3,-559.0],[-86.7,-558.4],[-169.3,-462.5]]},{"w":7,"p":[[237.7,391.7],[238.8,403.7],[245.7,422.6],[250.9,431.4],[259.0,441.8],[328.0,499.7],[484.3,632.5],[541.7,680.8]]},{"w":7,"p":[[167.4,232.3],[213.9,268.4],[304.2,342.9],[396.5,418.6],[452.7,465.4],[458.2,478.5],[466.5,495.6],[476.6,524.9],[484.1,537.3],[493.9,552.3],[527.3,583.3],[618.6,660.4],[638.7,678.1]]},{"w":7,"p":[[260.3,218.9],[363.9,307.4],[434.1,368.6]]},{"w":7,"p":[[319.4,152.0],[435.8,238.9]]},{"w":7,"p":[[58.4,440.6],[70.7,427.0],[106.8,386.9],[174.4,315.8],[213.9,268.4],[260.3,218.9],[319.4,152.0],[394.2,68.5]]},{"w":7,"p":[[505.0,287.9],[435.8,238.9]]},{"w":7,"p":[[478.5,143.6],[564.9,220.4],[505.0,287.9],[434.1,368.6],[396.5,418.6],[328.0,499.7],[293.0,541.4]]},{"w":7,"p":[[174.4,315.8],[221.1,355.1],[227.1,361.8],[233.0,372.4],[236.3,381.8],[237.7,391.7]]},{"w":7,"p":[[135.6,483.3],[70.7,427.0]]},{"w":7,"p":[[106.8,386.9],[179.4,445.1],[293.0,541.4],[449.6,674.2],[542.2,750.6]]},{"w":7,"p":[[86.4,545.8],[100.6,530.1],[135.6,483.3],[179.4,445.1],[237.7,391.7],[304.2,342.9],[363.9,307.4],[396.2,281.4],[410.3,268.1],[420.2,257.1],[435.8,238.9],[448.7,218.7],[456.4,202.5],[463.2,185.5],[478.5,143.6],[394.2,68.5],[348.7,25.7],[330.2,10.2]]},{"w":5,"p":[[477.1,-669.7],[533.8,-729.1]]},{"w":5,"p":[[433.6,-710.7],[493.3,-771.4]]},{"w":5,"p":[[393.0,-584.6],[437.0,-631.8]]},{"w":5,"p":[[364.1,-611.8],[408.2,-658.1]]},{"w":5,"p":[[334.8,-639.5],[380.3,-686.4]]},{"w":5,"p":[[-557.5,-18.1],[-529.0,-51.3],[-523.8,-58.5],[-521.7,-61.7],[-519.8,-64.8],[-519.6,-68.9],[-521.2,-73.2],[-523.3,-75.9],[-526.3,-79.0],[-583.0,-129.1],[-600.4,-144.2],[-607.1,-144.6],[-611.3,-142.7],[-614.1,-140.3],[-634.7,-117.9],[-651.1,-98.3]]},{"w":5,"p":[[-129.1,-530.1],[-243.0,-625.4]]},{"w":5,"p":[[-707.5,395.8],[-576.5,502.6]]},{"w":7,"p":[[748.0,383.2],[677.4,453.3]]},{"w":7,"p":[[613.1,376.7],[677.4,453.3],[735.8,522.3]]},{"w":7,"p":[[518.0,436.0],[607.7,512.5],[680.8,576.1],[685.8,581.2]]},{"w":7,"p":[[564.9,220.4],[678.2,320.9],[748.0,383.2],[807.4,440.1]]},{"w":7,"p":[[690.5,309.1],[678.2,320.9],[613.1,376.7],[572.1,403.0],[518.0,436.0],[452.7,465.4]]},{"w":7,"p":[[224.6,663.0],[223.2,725.5],[213.5,802.2],[212.6,807.2],[201.2,870.4],[180.0,964.9],[173.9,985.1],[171.9,998.4],[171.1,1020.3],[170.8,1047.7],[167.2,1077.1]]},{"w":7,"p":[[348.7,25.7],[279.5,112.1],[167.4,232.3],[-13.4,434.4]]},{"w":5,"p":[[412.2,-182.7],[441.3,-164.5],[529.9,-85.5],[615.9,-8.9],[560.8,54.0],[504.9,117.9],[427.4,51.9]]},{"w":5,"p":[[529.9,-85.5],[476.5,-23.9],[560.8,54.0]]},{"w":7,"p":[[167.2,680.8],[162.6,688.3],[167.2,704.6],[172.5,723.5],[172.9,728.9],[173.6,737.0],[173.2,746.0],[171.1,761.8],[165.1,781.3],[161.2,793.0],[212.6,807.2]]},{"w":7,"p":[[-22.5,738.8],[-15.7,698.1],[-12.3,662.4],[-11.8,660.4],[-11.2,653.7]]}],"areas":[]}</script>
+<script src="../engine.69b3dc5256.js"></script>
+</body>
+</html>

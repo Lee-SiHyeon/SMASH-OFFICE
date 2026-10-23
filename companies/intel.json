@@ -1,0 +1,29 @@
+{
+ "code": "intel",
+ "region": "us",
+ "lang": "en",
+ "group": "Big Tech",
+ "company": "Intel HQ",
+ "place": "Santa Clara",
+ "site": [
+  [
+   "way",
+   37947213
+  ],
+  [
+   "way",
+   37947209
+  ],
+  [
+   "way",
+   37947223
+  ],
+  [
+   "way",
+   31312444
+  ]
+ ],
+ "tagline": "Intel inside. Me outside.",
+ "series": "Office Smash",
+ "alias": "intel robert noyce building santa clara mission college"
+}

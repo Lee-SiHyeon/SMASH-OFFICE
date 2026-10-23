@@ -1,0 +1,29 @@
+{
+ "code": "netflix",
+ "region": "us",
+ "lang": "en",
+ "group": "Media",
+ "company": "Netflix HQ",
+ "place": "Los Gatos",
+ "site": [
+  [
+   "way",
+   488814458
+  ],
+  [
+   "way",
+   488814459
+  ],
+  [
+   "way",
+   488814461
+  ],
+  [
+   "way",
+   488814462
+  ]
+ ],
+ "tagline": "Are you still working?",
+ "series": "Office Smash",
+ "alias": "netflix los gatos albright way streaming"
+}
