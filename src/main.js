@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { makeT } from './i18n.js';
 import { THEMES, GROUP_THEME } from './themes.js';
+import { confettiAtlas, boardCanvas, themeSfx } from './fx_theme.js';
 
 const SCENE = JSON.parse(document.getElementById('scene-data').textContent);
 const CFG = JSON.parse(document.getElementById('config-data').textContent);
@@ -40,7 +41,7 @@ const world = new THREE.Group(); // 지진 때 통째로 흔들리는 무리
 scene.add(world);
 const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 1, 6000);
 const SITE_EXT = (() => { let m = 120; for (const r of SCENE.site) for (const [x, z] of r) m = Math.max(m, Math.hypot(x, z)); return Math.min(m, SCENE.radius); })();
-{ const d = (SITE_EXT * 1.55 + 160) * (IS_MOBILE ? 0.78 : 1); camera.position.set(-0.22 * d, (IS_MOBILE ? 0.55 : 0.62) * d, 0.95 * d); }
+{ const d = Math.max(430, (SITE_EXT * 1.55 + 160) * (IS_MOBILE && SITE_EXT > 300 ? 0.8 : 1)); camera.position.set(-0.22 * d, 0.66 * d, 0.95 * d); }
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 0, 0);
 controls.enableDamping = true;
@@ -710,6 +711,24 @@ SCENE.buildings.forEach((src, bi) => {
 });
 buildChunks();
 
+// 시작 카메라 방향: 16방향 중 부지를 가리는 주변 건물이 가장 적은 쪽
+(() => {
+  const tg = controls.target, d = camera.position.distanceTo(tg), hy = camera.position.y - tg.y, hr = Math.hypot(camera.position.x - tg.x, camera.position.z - tg.z);
+  let best = null;
+  for (let k = 0; k < 16; k++) {
+    const a = Math.atan2(camera.position.x - tg.x, camera.position.z - tg.z) + k * Math.PI / 8;
+    const cx = tg.x + Math.sin(a) * hr, cz = tg.z + Math.cos(a) * hr;
+    let occ = 0;
+    for (let t = 0.08; t < 0.92; t += 0.04) {
+      const x = cx + (tg.x - cx) * t, z = cz + (tg.z - cz) * t, y = hy * (1 - t);
+      for (const b of buildings) { if (b.site || b.h < y || x < b.bbox[0] || x > b.bbox[1] || z < b.bbox[2] || z > b.bbox[3]) continue; if (polyInside(x, z, b.poly)) { occ += (b.h - y) * (1.2 - t); break; } }
+    }
+    const score = occ + k * 0.01; // 같으면 원래 방향
+    if (!best || score < best.s) best = { s: score, x: cx, z: cz };
+  }
+  camera.position.set(best.x, camera.position.y, best.z); controls.update();
+})();
+
 // ───────────────────────── 옥상: 회사 간판 · 설비 ─────────────────────────
 const roofMat = new THREE.MeshStandardMaterial({ color: '#9aa1a8', roughness: 0.8, metalness: 0.2 });
 const roofUnits = (() => {
@@ -750,7 +769,7 @@ function signTexture(text) {
   const back = new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.8 });
   for (const b of site.slice(0, site.length > 6 ? 2 : 1)) {
     const len = Math.max(b.nx, b.nz) * b.cell;
-    const W = Math.max(24, Math.min(len * 0.85, 80)), H = W / 4;
+    const W = Math.max(18, Math.min(len * 0.75, 60)), H = W / 4;
     const g = new THREE.Group();
     const front = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat); front.position.set(0, H / 2 + 3, 0.6);
     const rear = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat); rear.position.set(0, H / 2 + 3, -0.6); rear.rotation.y = Math.PI;
@@ -1031,6 +1050,52 @@ class Particles {
     for (const k of ['position', 'aColor', 'aSize', 'aAlpha']) g.attributes[k].needsUpdate = true;
   }
 }
+// 업종별 소품 입자(서류·알약·동전…): 빙글빙글 돌며 팔랑팔랑 떨어짐
+const confetti = (() => {
+  const cap = IS_MOBILE ? 900 : 1600;
+  const g = new THREE.BufferGeometry();
+  const P = new Float32Array(cap * 3), SZ = new Float32Array(cap), A = new Float32Array(cap), ROT = new Float32Array(cap), IDX = new Float32Array(cap);
+  const V = new Float32Array(cap * 3), L = new Float32Array(cap), ML = new Float32Array(cap), SP = new Float32Array(cap), PH = new Float32Array(cap);
+  for (const [k, arr, n] of [['position', P, 3], ['aSize', SZ, 1], ['aAlpha', A, 1], ['aRot', ROT, 1], ['aIdx', IDX, 1]]) g.setAttribute(k, new THREE.BufferAttribute(arr, n).setUsage(THREE.DynamicDrawUsage));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+  const tex = new THREE.CanvasTexture(confettiAtlas(THEME_KEY)); tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { map: { value: tex }, uScale: { value: 1 } }, transparent: true, depthWrite: false,
+    vertexShader: `attribute float aSize; attribute float aAlpha; attribute float aRot; attribute float aIdx; varying float vA; varying float vR; varying float vI; uniform float uScale;
+      void main(){ vA = aAlpha; vR = aRot; vI = aIdx; vec4 mv = modelViewMatrix * vec4(position, 1.); gl_PointSize = min(aSize * uScale / max(-mv.z, 1.), 400.); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform sampler2D map; varying float vA; varying float vR; varying float vI;
+      void main(){ vec2 p = gl_PointCoord - .5; float c = cos(vR), s = sin(vR); p = mat2(c, -s, s, c) * p * 1.15 + .5;
+        if (p.x < 0. || p.y < 0. || p.x > 1. || p.y > 1.) discard;
+        vec2 uv = vec2((mod(vI, 2.) + p.x) / 2., 1. - (floor(vI / 2.) + p.y) / 2.);
+        vec4 t = texture2D(map, uv); if (t.a < .08) discard; gl_FragColor = vec4(t.rgb, t.a * vA); }`,
+  });
+  const pts = new THREE.Points(g, mat); pts.frustumCulled = false; pts.renderOrder = 4; world.add(pts);
+  let n = 0;
+  return {
+    mat,
+    burst(x, y, z, count, speed, dir) {
+      count = Math.round(count * Math.max(0.5, FXK));
+      for (let k = 0; k < count && n < cap; k++) {
+        const i = n++, a = rnd(0, Math.PI * 2), e = rnd(0.2, 1), sp = rnd(0.3, 1) * speed;
+        P.set([x + rnd(-2, 2), y + rnd(0, 3), z + rnd(-2, 2)], i * 3);
+        V.set(dir ? [dir[0] * sp + rnd(-4, 4), rnd(4, 14), dir[2] * sp + rnd(-4, 4)] : [Math.cos(a) * sp * (1 - e * 0.4), e * sp * 0.9 + 4, Math.sin(a) * sp * (1 - e * 0.4)], i * 3);
+        SZ[i] = rnd(4.5, 8); IDX[i] = (Math.random() * 4) | 0; ROT[i] = rnd(0, 6.28); SP[i] = rnd(-6, 6); PH[i] = rnd(0, 6.28); L[i] = 0; ML[i] = rnd(3, 5.5);
+      }
+    },
+    update(dt) {
+      for (let i = 0; i < n; i++) {
+        L[i] += dt;
+        if (L[i] >= ML[i]) { const j = --n; if (i !== j) { P.copyWithin(i * 3, j * 3, j * 3 + 3); V.copyWithin(i * 3, j * 3, j * 3 + 3); SZ[i] = SZ[j]; IDX[i] = IDX[j]; ROT[i] = ROT[j]; SP[i] = SP[j]; PH[i] = PH[j]; L[i] = L[j]; ML[i] = ML[j]; } i--; continue; }
+        const i3 = i * 3, dr = Math.max(0, 1 - 1.6 * dt);
+        V[i3] *= dr; V[i3 + 2] *= dr; V[i3 + 1] = Math.max(V[i3 + 1] - 9 * dt, -6); // 종이처럼 천천히 떨어짐
+        P[i3] += (V[i3] + Math.sin(L[i] * 3 + PH[i]) * 2.5) * dt; P[i3 + 1] += V[i3 + 1] * dt; P[i3 + 2] += (V[i3 + 2] + Math.cos(L[i] * 2.6 + PH[i]) * 2.5) * dt;
+        const fl = floorAt(P[i3], P[i3 + 2]) + 0.4; if (P[i3 + 1] < fl) { P[i3 + 1] = fl; V[i3] = V[i3 + 2] = 0; SP[i] *= 0.9; }
+        ROT[i] += SP[i] * dt; A[i] = Math.min(1, (ML[i] - L[i]) / 1);
+      }
+      g.setDrawRange(0, n); for (const k of ['position', 'aSize', 'aAlpha', 'aRot', 'aIdx']) g.attributes[k].needsUpdate = true;
+    },
+  };
+})();
 const fire = new Particles(IS_MOBILE ? 3500 : 5000, true);
 const smoke = new Particles(IS_MOBILE ? 4500 : 6000, false);
 let FXK = QUALITY[qLevel].fxk; // 화질에 따라 연기·불꽃 양
@@ -1060,6 +1125,7 @@ function explosionFX(x, y, z, R, big = 1) {
   fireball(x, y, z, R * 0.9, 0.5 + 0.25 * big);
   ring(x, Math.max(y - R * 0.6, groundH(x, z)), z, R * 3, 0.8 + 0.3 * big);
   const n = Math.min(220, 40 + R * 5) * FXK;
+  confetti.burst(x, y, z, Math.min(80, 20 + R * 1.5), R * 1.6);
   for (let i = 0; i < n; i++) {
     const a = rnd(0, Math.PI * 2), e = rnd(-0.1, 1), sp = rnd(0.3, 1.2) * R * 2.4;
     fire.spawn(x, y, z, Math.cos(a) * sp * (1 - e * 0.5), e * sp, Math.sin(a) * sp * (1 - e * 0.5), rnd(0.25, 0.5) * R, rnd(0.45, 0.9), [1, 0.92, 0.6], [1, 0.3, 0.06], 1, 1.2, 6);
@@ -1159,6 +1225,7 @@ const sfx = {
   rumble(d, a) { this.noise(d, 'lowpass', 220, 60, 0.35 + a * 0.5, 0.3); },
   nuke() { this.boom(3); this.noise(7, 'lowpass', 500, 40, 0.9, 0.05, 0.1); this.tone('sine', 50, 20, 5, 0.7, 0.05); },
 };
+const tsfx = themeSfx(THEME_KEY, sfx);
 
 // ───────────────────────── 화면 흔들림 · 보조 ─────────────────────────
 let shakeAmp = 0; const shakeOff = new THREE.Vector3();
@@ -1200,23 +1267,13 @@ function dropBomb(P) {
     if (Math.random() < 0.6) smoke.spawn(env.position.x, env.position.y, env.position.z, 0, 2, 0, 3 * k, 0.6, [1, 1, 1], [0.9, 0.9, 0.9], 0.35);
   }, done() {
     world.remove(env); env.geometry.dispose();
-    explode(P.x, P.y + 2, P.z, 20, 46, { crater: [16, 6] });
+    explode(P.x, P.y + 2, P.z, 20, 46, { crater: [16, 6] }); tsfx('bomb');
     if (Math.random() < 0.45) floatText(P, pick1(LABELS.bomb), '#fff');
   } });
 }
 
 let batScale = 1, batSeq = 1; const batHR = new Set();
-const boardTex = (() => {
-  const [c, x] = makeCanvas(512, 160);
-  x.fillStyle = '#2b2b2e'; x.fillRect(0, 0, 512, 160);
-  x.fillStyle = '#f6f4ee'; x.fillRect(40, 12, 460, 136);
-  x.fillStyle = '#9aa0a6'; x.fillRect(8, 50, 40, 60);
-  x.strokeStyle = '#222'; x.lineWidth = 3; x.font = 'bold 24px sans-serif'; x.fillStyle = '#222';
-  T('board').forEach((t, i) => { x.strokeRect(70 + i * 100, 24, 96, 112); x.fillText(t, 82 + i * 100, 56); });
-  x.strokeStyle = '#d4202a'; x.lineWidth = 7; x.beginPath(); x.arc(380, 100, 42, 0, 7); x.stroke();
-  x.fillStyle = '#d4202a'; x.font = 'bold 26px sans-serif'; x.textAlign = 'center'; x.fillText(T('reject'), 380, 110); x.textAlign = 'left';
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-})();
+const boardTex = (() => { const t = new THREE.CanvasTexture(boardCanvas(THEME_KEY, (k) => (k === 'lang' ? LANG : T(k)))); t.colorSpace = THREE.SRGBColorSpace; return t; })();
 function swingBat(P) {
   const L = 36 * batScale, id = batSeq++, VL = Math.max(L, 30 * camScale()); // VL: 보이는 크기
   const fwd = camFwd(), tan = new THREE.Vector3(-fwd.z, 0, fwd.x);
@@ -1239,6 +1296,7 @@ function swingBat(P) {
       rubble.wake(P.x, P.z, L * 0.4, 30, pivot.x, pivot.z);
       trees.clear(P.x, P.z, L * 0.3);
       sfx.at(P.x, P.z).whack(); sfx.v = 1; shake(1.5 * batScale);
+      confetti.burst(P.x, P.y, P.z, 30, 30, [dir.x, dir.y, dir.z]);
       for (let i = 0; i < 25; i++) smoke.spawn(P.x, P.y, P.z, dir.x * 20 + rnd(-6, 6), rnd(0, 8), dir.z * 20 + rnd(-6, 6), rnd(5, 10) * batScale, 1.8, [0.7, 0.68, 0.64], [0.6, 0.6, 0.6], 0.5);
       if (Math.random() < 0.5) floatText(P, pick1(LABELS.bat), '#ffd6d6');
     }
@@ -1344,7 +1402,7 @@ function meteor(P) {
   }, done() {
     world.remove(rock); rock.traverse((o) => o.geometry && o.geometry.dispose());
     explode(P.x, P.y + 4, P.z, 34, 95, { big: 1.8 });
-    crater(P.x, P.z, 42, 17);
+    crater(P.x, P.z, 42, 17); tsfx('meteor');
     floatText(P.clone().setY(P.y + 30), pick1(LABELS.meteor), '#ffcf8a');
   } });
 }
@@ -1353,7 +1411,7 @@ let quake = null, quakeM = 7;
 function startQuake(P) {
   const M = quakeM, A = Math.min(9, 0.08 * Math.pow(1.9, M - 4));
   quake = { t: 0, dur: 3.2, M, A, P: P.clone() };
-  sfx.rumble(3.4, Math.min(1, (M - 4) / 5)); shake(A * 0.6);
+  sfx.rumble(3.4, Math.min(1, (M - 4) / 5)); tsfx('quake'); shake(A * 0.6);
   floatText(P.clone().setY(P.y + 25), T('magLabel', M.toFixed(1), pick1(LABELS.quake)), '#ffd28a');
   for (const b of buildings) {
     if (b.gone) continue;
@@ -1371,6 +1429,7 @@ function startQuake(P) {
 }
 function quakeHit(b, I) {
   if (b.gone) return;
+  confetti.burst(b.cx, b.h * 0.8, b.cz, 14, 10);
   if (I >= 7.5) { // 통째로 주저앉음 (거친 덩어리로 처리해서 가볍게)
     const free = debris.cap - debris.n;
     obliterate(b, b.cx, b.cz, 1, Math.max(6, Math.min(b.site ? 110 : 40, Math.floor(free / 6))), true);
@@ -1406,7 +1465,8 @@ function nuke(P) {
 let timeScale = 1, slowT = 0;
 function detonate(P) {
   const R = 420;
-  flash(1, 2.2); slowT = 2.4; sfx.nuke(); shake(14);
+  flash(1, 2.2); slowT = 2.4; sfx.nuke(); tsfx('nuke'); shake(14);
+  confetti.burst(P.x, P.y + 40, P.z, 220, 160);
   fireball(P.x, P.y, P.z, 170, 3.2);
   ring(P.x, P.y, P.z, 1100, 4.5, '#ffe9c0'); ring(P.x, P.y, P.z, 700, 3, '#ffffff');
   const hitList = [...grid.query(P.x, P.z, R)].filter((b) => Math.hypot(b.cx - P.x, b.cz - P.z) < R + 20);
@@ -1763,7 +1823,7 @@ function frame(now) {
     if (quake.t >= quake.dur) { resettle(quake.P.x, quake.P.z, 400); quake = null; world.position.set(0, 0, 0); groundU.uQA.value = 0; trees.sway(0, 0); }
   }
   debris.update(dt);
-  fire.update(dt); smoke.update(dt);
+  fire.update(dt); smoke.update(dt); confetti.update(dt);
   let n = 0;
   for (const b of buildings) if (b.dirty && n < 4 && simTime - (b.lastCheck || 0) > 0.15) { b.lastCheck = simTime; supportCheck(b); n++; }
   if (fallQueue.length) dropLoose(fallQueue.shift());
@@ -1789,7 +1849,7 @@ function frame(now) {
   sun.target.position.set(sx, 0, sz);
   sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, 900);
   const ps = renderer.getDrawingBufferSize(new THREE.Vector2()).y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
-  fire.mat.uniforms.uScale.value = ps; smoke.mat.uniforms.uScale.value = ps;
+  fire.mat.uniforms.uScale.value = ps; smoke.mat.uniforms.uScale.value = ps; confetti.mat.uniforms.uScale.value = ps;
   sky.position.copy(camera.position);
 
   hudT += rdt; if (hudT > 0.1) { hudT = 0; hud(); }
