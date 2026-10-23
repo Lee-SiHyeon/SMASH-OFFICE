@@ -40,7 +40,7 @@ const world = new THREE.Group(); // 지진 때 통째로 흔들리는 무리
 scene.add(world);
 const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 1, 6000);
 const SITE_EXT = (() => { let m = 120; for (const r of SCENE.site) for (const [x, z] of r) m = Math.max(m, Math.hypot(x, z)); return Math.min(m, SCENE.radius); })();
-{ const d = SITE_EXT * 1.55 + 160; camera.position.set(-0.22 * d, 0.62 * d, 0.95 * d); }
+{ const d = (SITE_EXT * 1.55 + 160) * (IS_MOBILE ? 0.78 : 1); camera.position.set(-0.22 * d, (IS_MOBILE ? 0.55 : 0.62) * d, 0.95 * d); }
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 0, 0);
 controls.enableDamping = true;
@@ -545,12 +545,13 @@ const debris = (() => {
         const fl = floorAt(P[i3], P[i3 + 2]);
         if (P[i3 + 1] - half * 0.8 < fl) {
           P[i3 + 1] = fl + half * 0.8;
-          if (V[i3 + 1] < 0) V[i3 + 1] *= -0.25;
-          V[i3] *= 0.8; V[i3 + 2] *= 0.8; W[i3] *= 0.75; W[i3 + 1] *= 0.75; W[i3 + 2] *= 0.75;
+          if (V[i3 + 1] < 0) V[i3 + 1] *= -0.18;
+          V[i3] *= 0.55; V[i3 + 2] *= 0.55; W[i3] *= 0.6; W[i3 + 1] *= 0.6; W[i3 + 2] *= 0.6;
           if (sp < 2.2) REST[i] += dt; else REST[i] = 0;
         }
         if (P[i3 + 1] < -MAXD - 50 || AGE[i] > 40) { d.kill(i); i--; continue; }
         if (REST[i] > 0.35) { // 내려앉음 → 잔해
+          if (SZ[i3] > 2.5 && Math.random() < 0.35) sfx.thud(P[i3], P[i3 + 2], SZ[i3]);
           q.fromArray(Q, i * 4);
           const rs = rubbleL.add(P[i3], P[i3 + 1], P[i3 + 2], SZ[i3], SZ[i3 + 1], SZ[i3 + 2], q, C[i3], C[i3 + 1], C[i3 + 2], STY[i]);
           rubIdx.add(rs, P[i3], P[i3 + 2]);
@@ -930,7 +931,7 @@ function dropLoose({ b, loose }) {
     if (k++ % 5 === 0) smoke.spawn(sx / n, sy / n, sz / n, rnd(-2, 2), rnd(0, 2), rnd(-2, 2), rnd(10, 18), 4, [0.72, 0.7, 0.66], [0.55, 0.54, 0.52], 0.45);
     pts(10 * n, sx / n, sy / n, sz / n, true);
   }
-  if (loose.length > 30) sfx.crumble(Math.min(1, loose.length / 600));
+  if (loose.length > 30) { sfx.at(b.cx, b.cz).crumble(Math.min(1, loose.length / 600)); sfx.v = 1; }
   b.dirty = true;
 }
 function checkCollapse(b) {
@@ -972,7 +973,7 @@ function obliterate(b, cx, cz, R, budget, gentle = false) {
   if (b.site) destroyedSite += b.alive;
   pts(10 * b.alive, b.cx, b.h / 2, b.cz, true);
   if (gentle) for (let i = 0; i < 14 * FXK; i++) smoke.spawn(b.cx + rnd(-20, 20), rnd(2, b.h * 0.6), b.cz + rnd(-20, 20), rnd(-4, 4), rnd(1, 5), rnd(-4, 4), rnd(18, 34), 5, [0.75, 0.72, 0.68], [0.6, 0.58, 0.56], 0.55, 1.5);
-  if (gentle) sfx.crumble(0.8);
+  if (gentle) { sfx.at(b.cx, b.cz).crumble(0.8); sfx.v = 1; }
   b.alive = 0; b.gone = true; checkCollapse(b);
 }
 
@@ -1091,32 +1092,56 @@ function recordTool(id) {
 
 // ───────────────────────── 소리 (Web Audio 합성) ─────────────────────────
 const sfx = {
-  ctx: null, out: null, muted: false, nb: null,
+  ctx: null, out: null, muted: false, nb: null, v: 1, lastThud: 0, thudN: 0,
+  at(x, z) { const d = Math.hypot(camera.position.x - x, camera.position.y, camera.position.z - z); this.v = THREE.MathUtils.clamp(1.7 - d / 800, 0.35, 1.35); return this; },
   init() {
-    if (this.ctx) { this.ctx.resume(); return; }
+    // 아이폰 무음 스위치가 켜져 있어도 소리가 나게: 오디오 세션을 '재생'으로
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (!this.silent) {
+      try { // 무음 짧은 wav를 반복 재생해 두면 iOS가 웹 오디오를 무음 모드에서도 내보냄
+        const a = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+        a.loop = true; a.setAttribute('playsinline', ''); a.volume = 0.01; a.play().catch(() => {}); this.silent = a;
+      } catch (e) {}
+    }
+    if (this.ctx) { if (this.ctx.state !== 'running') this.ctx.resume(); return; }
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     this.ctx = new C();
+    this.ctx.resume && this.ctx.resume();
+    // iOS 첫 소리 깨우기: 아주 짧은 무음 버퍼 재생
+    try { const bs = this.ctx.createBufferSource(); bs.buffer = this.ctx.createBuffer(1, 1, 22050); bs.connect(this.ctx.destination); bs.start(0); } catch (e) {}
     const comp = this.ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 6;
     this.out = this.ctx.createGain(); this.out.gain.value = 0.85; this.out.connect(comp); comp.connect(this.ctx.destination);
     const len = this.ctx.sampleRate * 3; this.nb = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const d = this.nb.getChannelData(0); let b = 0;
     for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b = (b + 0.02 * w) / 1.02; d[i] = w * 0.5 + b * 3; }
   },
-  ok() { return this.ctx && !this.muted; },
+  ok() { if (this.ctx && this.ctx.state !== 'running') this.ctx.resume(); return this.ctx && !this.muted; },
   env(g, t0, a, peak, dur) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); },
   noise(dur, type, f0, f1, peak, a = 0.004, delay = 0) {
     if (!this.ok()) return; const c = this.ctx, t = c.currentTime + delay;
     const s = c.createBufferSource(); s.buffer = this.nb; s.loop = true;
     const f = c.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
-    const g = c.createGain(); this.env(g, t, a, peak, dur);
+    const g = c.createGain(); this.env(g, t, a, Math.min(1.5, peak * this.v), dur);
     s.connect(f); f.connect(g); g.connect(this.out); s.start(t, Math.random() * 2); s.stop(t + dur + 0.05);
   },
   tone(type, f0, f1, dur, peak, a = 0.005, delay = 0) {
     if (!this.ok()) return; const c = this.ctx, t = c.currentTime + delay;
     const o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(10, f1), t + dur);
-    const g = c.createGain(); this.env(g, t, a, peak, dur); o.connect(g); g.connect(this.out); o.start(t); o.stop(t + dur + 0.05);
+    const g = c.createGain(); this.env(g, t, a, Math.min(1.5, peak * this.v), dur); o.connect(g); g.connect(this.out); o.start(t); o.stop(t + dur + 0.05);
   },
-  boom(s = 1) { this.noise(0.6 + s * 0.9, 'lowpass', 1600 * Math.min(1.5, s), 80, 0.9 * Math.min(1, 0.5 + s * 0.4)); this.tone('sine', 90, 28, 0.5 + s * 0.6, 0.8); },
+  boom(s = 1) {
+    this.noise(0.09, 'highpass', 5000, 1500, 0.9 * Math.min(1, 0.4 + s * 0.5)); // 터지는 순간 '딱'
+    this.noise(0.6 + s * 0.9, 'lowpass', 1800 * Math.min(1.5, s), 70, 0.95 * Math.min(1, 0.5 + s * 0.4)); // 본 폭발
+    this.tone('sine', 95, 26, 0.5 + s * 0.7, 0.9); this.tone('triangle', 60, 22, 0.35 + s * 0.4, 0.5); // 저음 쿵
+    const n = 3 + Math.min(8, s * 4); for (let k = 0; k < n; k++) this.noise(rnd(0.04, 0.12), 'bandpass', rnd(900, 3500), rnd(400, 900), rnd(0.15, 0.35), 0.002, rnd(0.1, 0.9 + s * 0.4)); // 파편 튀는 소리
+  },
+  thud(x, z, sz) { // 조각이 땅에 떨어지는 소리 (1초에 12번까지)
+    const now = performance.now(); if (now - this.lastThud > 1000) { this.lastThud = now; this.thudN = 0; } if (++this.thudN > 12) return;
+    this.at(x, z); const k = Math.min(1, sz / 8);
+    this.tone('sine', rnd(70, 120) * (1.3 - k * 0.6), 35, 0.18 + k * 0.2, 0.25 + k * 0.35, 0.002); this.noise(0.12 + k * 0.15, 'lowpass', 900, 150, 0.15 + k * 0.25, 0.002); this.v = 1;
+  },
+  cheer() { this.noise(2.2, 'bandpass', 700, 1400, 0.35, 0.4); this.tone('square', 523, 523, 0.12, 0.12, 0.005, 0.05); this.tone('square', 659, 659, 0.12, 0.12, 0.005, 0.18); this.tone('square', 784, 784, 0.3, 0.12, 0.005, 0.31); },
+  click() { this.v = 1; this.tone('triangle', 1100, 700, 0.06, 0.18); },
   crumble(s) { this.noise(1 + s * 1.5, 'bandpass', 700, 180, 0.25 + s * 0.4, 0.05); },
   whack() { this.noise(0.18, 'highpass', 3000, 800, 0.8); this.tone('square', 220, 70, 0.2, 0.35); },
   whoosh(d) { this.noise(d, 'bandpass', 300, 2600, 0.35, d * 0.8); },
@@ -1148,7 +1173,7 @@ function explode(x, y, z, R, power, opt = {}) {
   if (opt.crater && y - groundH(x, z) < R * 0.8) crater(x, z, opt.crater[0], opt.crater[1]);
   explosionFX(x, y, z, R, opt.big || 1);
   shake(R * 0.08 * (opt.big || 1));
-  sfx.boom(R / 18);
+  sfx.at(x, z).boom(R / 16); sfx.v = 1;
 }
 
 // ───────────────────────── 도구 ─────────────────────────
@@ -1175,7 +1200,7 @@ function dropBomb(P) {
     if (Math.random() < 0.6) smoke.spawn(env.position.x, env.position.y, env.position.z, 0, 2, 0, 3 * k, 0.6, [1, 1, 1], [0.9, 0.9, 0.9], 0.35);
   }, done() {
     world.remove(env); env.geometry.dispose();
-    explode(P.x, P.y + 2, P.z, 14, 40, { crater: [12, 4.5] });
+    explode(P.x, P.y + 2, P.z, 20, 46, { crater: [16, 6] });
     if (Math.random() < 0.45) floatText(P, pick1(LABELS.bomb), '#fff');
   } });
 }
@@ -1213,7 +1238,7 @@ function swingBat(P) {
       for (let i = 0; i < 2; i++) debris.push(P.x, P.y, P.z, L * 0.5, 25);
       rubble.wake(P.x, P.z, L * 0.4, 30, pivot.x, pivot.z);
       trees.clear(P.x, P.z, L * 0.3);
-      sfx.whack(); shake(1.5 * batScale);
+      sfx.at(P.x, P.z).whack(); sfx.v = 1; shake(1.5 * batScale);
       for (let i = 0; i < 25; i++) smoke.spawn(P.x, P.y, P.z, dir.x * 20 + rnd(-6, 6), rnd(0, 8), dir.z * 20 + rnd(-6, 6), rnd(5, 10) * batScale, 1.8, [0.7, 0.68, 0.64], [0.6, 0.6, 0.6], 0.5);
       if (Math.random() < 0.5) floatText(P, pick1(LABELS.bat), '#ffd6d6');
     }
@@ -1221,7 +1246,7 @@ function swingBat(P) {
   }, done() { world.remove(g); board.geometry.dispose(); } });
 }
 function batLanded(id, dist, x, y, z) {
-  if (dist > 70 && !batHR.has(id)) { batHR.add(id); award(3000, T('homerun', Math.round(dist))); floatText(new THREE.Vector3(x, y + 8, z), T('homerunShort', Math.round(dist)), '#ffe066'); }
+  if (dist > 70 && !batHR.has(id)) { batHR.add(id); award(3000, T('homerun', Math.round(dist))); sfx.cheer(); floatText(new THREE.Vector3(x, y + 8, z), T('homerunShort', Math.round(dist)), '#ffe066'); }
 }
 
 // 엑셀 레이저
@@ -1354,9 +1379,15 @@ function quakeHit(b, I) {
   if (!voxelize(b)) return;
   const live = []; for (let i = 0; i < b.vox.length; i++) if (b.vox[i] >= 0) live.push(i);
   const lvl = (i) => ((i / b.nz) | 0) % b.ny;
-  if (I >= 7) live.filter((i) => lvl(i) === 0 && Math.random() < (I - 6.6) * 0.6).forEach((i) => removeBlock(b, i, 'debris', rnd(-3, 3), 0, rnd(-3, 3)));
-  const frac = Math.min(0.25, (I - 5.6) * 0.06);
-  live.filter((i) => b.vox[i] >= 0 && lvl(i) >= b.ny / 2 && Math.random() < frac).forEach((i) => removeBlock(b, i, 'debris', rnd(-6, 6), rnd(0, 4), rnd(-6, 6)));
+  // 건물 한쪽 동(날개)의 1층 기둥이 무너지면 그 위가 통째로 주저앉음 (받침 검사가 떨어뜨림)
+  const col = (i) => [(i / (b.nz * b.ny)) | 0, i % b.nz];
+  const wings = I >= 7 ? 1 + Math.floor((I - 7) * 4) : (I >= 6.2 ? 1 : 0);
+  for (let w = 0; w < wings; w++) {
+    const ac = b.cellsIn[(Math.random() * b.cellsIn.length) | 0], ca = (ac / b.nz) | 0, cc = ac % b.nz;
+    const R = Math.max(1.5, Math.sqrt(b.cellsIn.length) * rnd(0.25, 0.45));
+    live.filter((i) => lvl(i) <= 1 && b.vox[i] >= 0).forEach((i) => { const [a, c] = col(i); if (Math.hypot(a - ca, c - cc) <= R) removeBlock(b, i, 'debris', rnd(-2, 2), 0, rnd(-2, 2)); });
+  }
+  if (I < 6.2) live.filter((i) => b.vox[i] >= 0 && lvl(i) === b.ny - 1 && Math.random() < 0.04).forEach((i) => removeBlock(b, i, 'debris', rnd(-3, 3), rnd(0, 2), rnd(-3, 3))); // 약한 지진: 옥상 일부만
 }
 
 let nukeBusy = false;
@@ -1423,6 +1454,7 @@ function buildDock() {
   selectTool('bomb');
 }
 function selectTool(id) {
+  if (tool !== id) sfx.click();
   tool = id;
   document.querySelectorAll('.tool').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
   const t = TOOLS.find((k) => k.id === id);
@@ -1641,6 +1673,8 @@ function updateLabels() {
     if (!show && L.on) { L.el.style.display = 'none'; L.on = false; }
   }
   vis.sort((a, b) => a[3] - b[3]); // 가까운 것부터 자리 차지
+  const maxL = IS_MOBILE ? (camera.position.distanceTo(controls.target) > SITE_EXT * 1.2 + 250 ? 10 : 22) : 60;
+  if (vis.length > maxL) { vis.sort((a, b) => Math.hypot(a[1] - W / 2, a[2] - H / 2) - Math.hypot(b[1] - W / 2, b[2] - H / 2)); for (const v of vis.splice(maxL)) if (v[0].on) { v[0].el.style.display = 'none'; v[0].on = false; } }
   for (const [L, x, y] of vis) {
     const k = `${Math.round(x / 84)},${Math.round(y / 20)}`;
     if (occ.has(k)) { if (L.on) { L.el.style.display = 'none'; L.on = false; } continue; }
@@ -1778,6 +1812,7 @@ $('startTag').textContent = CFG.tagline;
 $('credit').textContent = T('credit', CFG.place, CFG.company, SITE_COUNT);
 buildDock();
 $('nightBtn').onclick = () => setNight(!nightOn);
+$('menuBtn').onclick = () => $('bottom').classList.toggle('open');
 $('labelBtn').onclick = () => { labelsOn = !labelsOn; $('labelBtn').classList.toggle('on', labelsOn); };
 $('qBtn').textContent = T('quality', QUALITY[qLevel].name);
 document.documentElement.lang = LANG;
@@ -1794,11 +1829,14 @@ $('rankClose').onclick = () => ($('rankModal').hidden = true);
 $('submitBtn').onclick = submitScore;
 try { $('nick').value = localStorage.getItem('smash-nick') || ''; } catch (e) {}
 $('rankAll').href = (CFG.hub || '../') + '#rank';
+['pointerdown', 'touchend', 'keydown'].forEach((ev) => addEventListener(ev, () => { if (!$('start').classList.contains('gone')) return; sfx.init(); }, { capture: true, passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && sfx.ctx && sfx.ctx.state !== 'running') sfx.ctx.resume(); });
 $('startBtn').onclick = () => {
   sfx.init(); $('start').classList.add('gone');
   setTimeout(() => toast(T('hint'), 3500), 400);
 };
-window.__smash = { dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+window.__sfxState = () => sfx.ctx && sfx.ctx.state;
+window.__smash = { screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
 function warmup() {
   const P = new THREE.Vector3(0, -500, 0);
   fireball(P.x, P.y, P.z, 1, 0.01); ring(P.x, P.y, P.z, 1, 0.01);

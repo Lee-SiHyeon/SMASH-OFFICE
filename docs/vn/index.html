@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<script>if(!/\/$|\.html$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>if(!/\/$|\.html$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">')</script>
 <title>Đập Công Ty — chọn công ty trên bản đồ và đập nát</title>
 <meta name="description" content="Đập Công Ty: phá các khu văn phòng thật bằng 3D, từ bom đơn nghỉ việc đến bom hạt nhân nghỉ việc.">
 <meta property="og:title" content="Đập Công Ty — chọn công ty trên bản đồ và đập nát">
@@ -101,7 +101,7 @@ const ITEMS = [{"code": "vn-bitexco", "region": "vn", "group": "Bất động s�
 const H = {"title": "Đập Công Ty — chọn công ty trên bản đồ và đập nát", "desc": "Đập Công Ty: phá các khu văn phòng thật bằng 3D, từ bom đơn nghỉ việc đến bom hạt nhân nghỉ việc.", "series": "Đập Công Ty", "h1": "Hôm nay đập công ty nào?", "sub": "Chọn công ty trên bản đồ. Bố cục tòa nhà thật (OpenStreetMap) dựng 3D — từ bom đơn nghỉ việc đến bom hạt nhân.", "tabList": "Chọn công ty", "tabRank": "Xếp hạng", "today": "Hôm nay", "total": "Tất cả", "searchPh": "Tìm công ty hoặc thành phố (vd: Samsung, Hải Phòng)", "foot": "Game nhại không chính thức, không liên quan đến công ty nào. Bản đồ © OpenStreetMap contributors", "request": "Yêu cầu thêm công ty →", "all": "Tất cả", "bldgs": "{0} tòa", "goLong": "Đi đập →", "go": "Đập", "none": "Không tìm thấy. Gửi yêu cầu qua liên kết bên dưới.", "rOff": "Máy chủ xếp hạng sắp ra mắt.", "loading": "Đang tải…", "plays": "{0} lượt", "challenge": "Thử thách →", "noRec": "Chưa có kỷ lục", "rFail": "Không tải được bảng xếp hạng.", "base": "../"};
 const REGION = 'vn';
 document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
-document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "../"], ["us", "🇺🇸 USA", "../us/"], ["jp", "🇯🇵 日本", "../jp/"], ["cn", "🇨🇳 中国", "../cn/"], ["eu", "🇪🇺 Europe", "../eu/"], ["vn", "🇻🇳 Việt Nam", "../vn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
+document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "../"], ["us", "🇺🇸 USA", "../us/"], ["jp", "🇯🇵 日本", "../jp/"], ["cn", "🇨🇳 中国", "../cn/"], ["eu", "🇪🇺 Europe", "../eu/"], ["in", "🇮🇳 India", "../in/"], ["vn", "🇻🇳 Việt Nam", "../vn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
 const COL = new Proxy({ LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' }, { get: (o, k) => o[k] || ['#e4572e', '#2e86ab', '#7b2cbf', '#13a36b', '#c4005a', '#ea5b0c', '#0b2e5c'][[...String(k)].reduce((a, c) => a + c.charCodeAt(0), 0) % 7] });
 const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([16, 106.5], 5);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>if(!/\/$|\.html$/.test(location.pathname))document.write('<base href="'+location.pathname+'/">')</script>
+<title>Office Smash — pick a company on the map and wreck it</title>
+<meta name="description" content="Office Smash: wreck real company campuses in 3D, from the Resignation Bomb to the Quit Nuke.">
+<meta property="og:title" content="Office Smash — pick a company on the map and wreck it">
+<meta property="og:description" content="Office Smash: wreck real company campuses in 3D, from the Resignation Bomb to the Quit Nuke.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE/in/">
+<meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE/in-infosys-mysuru/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23ff6a2b%22/%3E%3Cpath d=%22M8 24V12l4-3v15M14 24V7l5 3v14M21 24V14l3 2v8%22 stroke=%22white%22 stroke-width=%222%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#0d1118;--panel:#151b26;--line:rgba(255,255,255,.1);--fg:#f2f5f9;--muted:#9aa6b6;--accent:#ff6a2b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
+#app{display:grid;grid-template-columns:380px 1fr;height:100%}
+#side{min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+header{padding:20px 20px 14px}
+.series{color:var(--accent);font-weight:800;font-size:12px}
+h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
+.sub{color:var(--muted);font-size:13px;line-height:1.5}
+#chips[hidden],#list[hidden],#searchWrap[hidden]{display:none}
+#searchWrap{padding:0 20px 10px}#search{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--fg);border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;outline:none}#search:focus{border-color:var(--accent)}
+.empty{color:var(--muted);font-size:13px;padding:14px 10px}
+#chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 12px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.chip.on{background:var(--fg);color:#111;border-color:var(--fg)}
+#list{overflow:auto;padding:0 12px 16px;flex:1}
+.card{display:flex;gap:12px;align-items:center;padding:11px 10px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+.card:hover,.card.sel{background:rgba(255,255,255,.05);border-color:var(--line)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.card .t{flex:1;min-width:0}
+.card b{display:block;font-size:15px}
+.card span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#regions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.rg{font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.rg.on{color:#111;background:var(--fg);border-color:var(--fg)}
+#tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
+#rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
+.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
+.rrow{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer}.rrow:hover{background:rgba(255,255,255,.04)}
+.rrow .no{width:24px;text-align:right;font-weight:900;color:var(--muted)}.rrow .t{flex:1;min-width:0}.rrow b{display:block}.rrow span{color:var(--muted);font-size:12px}
+.rrow .sc{font-weight:900;font-variant-numeric:tabular-nums}.bar{height:4px;border-radius:2px;background:var(--accent);margin-top:4px}
+.people{padding:4px 0 10px 34px}.people li{font-size:13px;padding:3px 0;color:#d5dbe3;display:flex;gap:8px}.people li i{font-style:normal;color:var(--muted);width:18px}.people li em{margin-left:auto;font-style:normal;font-weight:800}
+.muted{color:var(--muted);font-size:13px;padding:10px 4px}
+.go{background:var(--accent);color:#fff;text-decoration:none;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;white-space:nowrap}
+#map{height:100%;background:#cfd6dc}
+footer{padding:10px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.6}
+footer a{color:#ffb38f}
+.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);display:grid;place-items:center}
+.pin i{transform:rotate(45deg);color:#fff;font-style:normal;font-weight:900;font-size:11px}
+.leaflet-popup-content-wrapper{border-radius:14px}
+.pop{font-family:inherit;min-width:200px}
+.pop .g{font-size:11px;font-weight:800}
+.pop h3{margin:2px 0 4px;font-size:17px}
+.pop p{margin:0 0 10px;color:#4a5566;font-size:12px}
+.pop .go{display:inline-block}
+@media (max-width:760px){
+  html,body{height:auto}
+  #app{display:flex;flex-direction:column;height:auto}
+  #map{order:-1;height:36vh;min-height:220px;flex:none}
+  #side{display:block;border-right:0;border-top:1px solid var(--line);min-height:64vh}
+  header{padding:12px 16px 6px}h1{font-size:20px;margin:2px 0 0}.sub{display:none}
+  #regions,#chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #regions::-webkit-scrollbar,#chips::-webkit-scrollbar{display:none}
+  .rg,.chip{flex:none}
+  #tabs{padding:6px 16px 8px}
+  #searchWrap{position:sticky;top:0;z-index:20;background:var(--panel);padding:8px 16px}
+  #chips{padding:0 16px 8px}
+  #list,#rank{overflow:visible;padding-bottom:40px}
+  .card{padding:13px 10px}
+  footer{display:block}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header>
+      <div id="regions"></div>
+      <div class="series" data-h="series"></div>
+      <h1 data-h="h1"></h1>
+      <div class="sub" data-h="sub"></div>
+    </header>
+    <div id="tabs"><button class="tab on" data-t="list" data-h="tabList"></button><button class="tab" data-t="rank" data-h="tabRank"></button></div>
+    <div id="searchWrap"><input id="search" type="search" data-h="searchPh" data-attr="placeholder" autocomplete="off"></div>
+    <div id="chips"></div>
+    <div id="list"></div>
+    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
+    <footer><span data-h="foot"></span><br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues" data-h="request"></a></footer>
+  </aside>
+  <div id="map"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const ITEMS = [{"code": "in-infosys-mysuru", "region": "in", "group": "IT", "name": "Infosys Mysuru Campus", "place": "Mysuru", "tag": "Bench for 6 months, then three projects by Friday", "lat": 12.36493, "lon": 76.59971, "n": 129, "alias": "infosys mysuru mysore campus gec training it"}, {"code": "in-wipro", "region": "in", "group": "IT", "name": "Wipro Corporate Office", "place": "Sarjapur Road, Bengaluru", "tag": "Client escalation at 2 AM, appraisal never", "lat": 12.91502, "lon": 77.68459, "n": 20, "alias": "wipro corporate office sarjapur road doddakannelli bangalore bengaluru it"}, {"code": "in-maruti-manesar", "region": "in", "group": "Auto", "name": "Maruti Suzuki Manesar Plant", "place": "Manesar, Gurugram", "tag": "Kindly do the needful by EOD", "lat": 28.36716, "lon": 76.89361, "n": 31, "alias": "maruti suzuki manesar gurugram gurgaon plant factory"}, {"code": "in-tata-pune", "region": "in", "group": "Auto", "name": "Tata Motors Pune Plant", "place": "Pimpri-Chinchwad", "tag": "Appraisal: 3% hike, 300% more targets", "lat": 18.63682, "lon": 73.78533, "n": 17, "alias": "tata motors pune pimpri chinchwad telco plant factory"}, {"code": "in-reliance", "region": "in", "group": "Conglomerate", "name": "Reliance Corporate Park", "place": "Ghansoli, Navi Mumbai", "tag": "Jio unlimited data, unlimited working hours", "lat": 19.12747, "lon": 73.01204, "n": 149, "alias": "reliance industries corporate park rcp ghansoli navi mumbai jio"}, {"code": "in-samsung-noida", "region": "in", "group": "Electronics", "name": "Samsung India Noida Factory", "place": "Noida Sector 81", "tag": "Target: 120 million phones. Your leave request: pending", "lat": 28.54999, "lon": 77.40249, "n": 27, "alias": "samsung india noida sector 81 factory phone galaxy"}, {"code": "in-samsung-blr", "region": "in", "group": "Electronics", "name": "Samsung R&D Institute Bangalore", "place": "Bengaluru", "tag": "Standup at 9, Korea sync at 11 PM", "lat": 12.98006, "lon": 77.69769, "n": 1, "alias": "samsung r&d institute india bangalore bengaluru sri-b bagmane"}];
+const H = {"title": "Office Smash — pick a company on the map and wreck it", "desc": "Office Smash: wreck real company campuses in 3D, from the Resignation Bomb to the Quit Nuke.", "series": "Office Smash", "h1": "Which Indian office will you wreck?", "sub": "Pick a company on the map. Real building layouts (OpenStreetMap) in 3D — from the Resignation Bomb to the Quit Nuke.", "tabList": "Companies", "tabRank": "Ranking", "today": "Today", "total": "All time", "searchPh": "Search company or city (e.g. Google, Seattle)", "foot": "Unofficial parody game, not affiliated with any company. Map © OpenStreetMap contributors", "request": "Request your company →", "all": "All", "bldgs": "{0} buildings", "bldg1": "1 building", "goLong": "Smash it →", "go": "Smash", "none": "No match. Request it with the link below.", "rOff": "Ranking server coming soon.", "loading": "Loading…", "plays": "{0} plays", "challenge": "Take the challenge →", "noRec": "No records yet", "rFail": "Could not load the ranking.", "base": "../"};
+const REGION = 'in';
+document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
+document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "../"], ["us", "🇺🇸 USA", "../us/"], ["jp", "🇯🇵 日本", "../jp/"], ["cn", "🇨🇳 中国", "../cn/"], ["eu", "🇪🇺 Europe", "../eu/"], ["in", "🇮🇳 India", "../in/"], ["vn", "🇻🇳 Việt Nam", "../vn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
+const COL = new Proxy({ LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a', '북한': '#8b1a1a' }, { get: (o, k) => o[k] || ['#e4572e', '#2e86ab', '#7b2cbf', '#13a36b', '#c4005a', '#ea5b0c', '#0b2e5c'][[...String(k)].reduce((a, c) => a + c.charCodeAt(0), 0) % 7] });
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([22, 79], 5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+const markers = {};
+let group = H.all, query = '';
+const norm = (s) => s.toLowerCase().replace(/\s+/g, '');
+const match = (it) => !query || norm(`${it.name}${it.place}${it.group}${it.code}${it.alias || ''}`).includes(norm(query));
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+for (const it of ITEMS) {
+  const icon = L.divIcon({ className: '', html: `<div class="pin" style="background:${COL[it.group] || '#555'}"><i>${esc(it.group.slice(0, 2))}</i></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
+  const m = L.marker([it.lat, it.lon], { icon, title: it.name }).addTo(map);
+  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>${(it.n === 1 && H.bldg1) ? H.bldg1 : H.bldgs.replace('{0}', it.n)}</p><a class="go" href="${H.base}${it.code}/">${H.goLong}</a></div>`);
+  m.on('click', () => select(it.code, false));
+  markers[it.code] = m;
+}
+function select(code, fly) {
+  document.querySelectorAll('.card').forEach((c) => c.classList.toggle('sel', c.dataset.code === code));
+  const it = ITEMS.find((i) => i.code === code);
+  if (fly) { if (innerWidth <= 760) window.scrollTo({ top: 0, behavior: 'smooth' }); map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
+}
+function render() {
+  const groups = [H.all, ...new Set(ITEMS.map((i) => i.group))];
+  document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
+  const shown = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i));
+  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}' — ${H.none}</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${(it.n === 1 && H.bldg1) ? H.bldg1 : H.bldgs.replace('{0}', it.n)} · ${esc(it.tag)}</span></div><a class="go" href="${H.base}${it.code}/">${H.go}</a></div>`).join('');
+  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
+  for (const it of ITEMS) { const on = (group === H.all || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
+}
+function fit() { const pts = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i)).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
+render(); fit();
+const SITE = {"supabaseUrl": "https://eardnytyohdekpvkzmid.supabase.co", "supabaseKey": "sb_publishable_2X8Cl7S9KwHjyNgkxnr0wg_zdsq3eEE", "adClient": "ca-pub-1334738005365868", "adHost": "lifehackailab.com"};
+// 광고: 승인된 도메인(lifehackailab.com 하위)에서만 자동 광고를 켬. 게임 화면에는 넣지 않음
+if (SITE.adClient && location.hostname.endsWith(SITE.adHost)) { const a = document.createElement('script'); a.async = true; a.crossOrigin = 'anonymous'; a.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}`; document.head.appendChild(a); }
+const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
+async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+let period = 'today', rankCache = null;
+async function showRank() {
+  const body = document.getElementById('rankBody');
+  if (!RANK_ON) { body.innerHTML = `<p class="muted">${H.rOff}</p>`; return; }
+  body.innerHTML = `<p class="muted">${H.loading}</p>`;
+  try {
+    rankCache = rankCache || await rpc('smash_companies');
+    const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
+    const max = Math.max(1, rows[0].v);
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
+      const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
+      box.innerHTML = `<p class="muted">${H.loading}</p>`;
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
+      box.dataset.loaded = 1;
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
+    }));
+  } catch (e) { body.innerHTML = `<p class="muted">${H.rFail}</p>`; }
+}
+function tab(t) {
+  document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  document.getElementById('list').hidden = t !== 'list'; document.getElementById('chips').hidden = t !== 'list'; document.getElementById('searchWrap').hidden = t !== 'list';
+  document.getElementById('rank').hidden = t !== 'rank';
+  if (t === 'rank') showRank();
+}
+document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.dataset.t)));
+document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
+const sEl = document.getElementById('search');
+sEl.addEventListener('input', () => { query = sEl.value.trim(); render(); if (innerWidth > 760) fit(); });
+sEl.addEventListener('change', () => fit());
+sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === H.all || i.group === group) && match(i)); if (first) select(first.code, true); } });
+function renderList() { render(); fit(); }
+if (location.hash === '#rank') tab('rank');
+</script>
+</body>
+</html>
