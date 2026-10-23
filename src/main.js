@@ -358,10 +358,23 @@ const pile = (() => {
   return {
     get(x, z) { const i = ix(x), j = ix(z); return i < 0 || j < 0 || i >= N || j >= N ? 0 : h[j * N + i]; },
     raise(x, z, r, top) {
+      top = Math.min(top, 14); // 더미 높이 상한
       for (let j = ix(z - r); j <= ix(z + r); j++) for (let i = ix(x - r); i <= ix(x + r); i++) {
         if (i < 0 || j < 0 || i >= N || j >= N) continue;
         if (h[j * N + i] < top) h[j * N + i] = top;
       }
+    },
+    // 더미 위에 떨어진 조각이 옆보다 너무 높으면 낮은 쪽으로 굴러 내려감 (원뿔 모양 더미)
+    slide(x, z, size) {
+      const step = Math.max(2.5, size * 0.7), lim = Math.max(1.4, size * 0.6);
+      for (let k = 0; k < 12; k++) {
+        const h0 = this.get(x, z) + groundH(x, z);
+        let bx = x, bz = z, bh = h0;
+        for (let a = 0; a < 8; a++) { const nx = x + Math.cos(a * Math.PI / 4) * step, nz = z + Math.sin(a * Math.PI / 4) * step, nh = this.get(nx, nz) + groundH(nx, nz); if (nh < bh) { bh = nh; bx = nx; bz = nz; } }
+        if (h0 - bh <= lim) break;
+        x = bx + rnd(-0.5, 0.5); z = bz + rnd(-0.5, 0.5);
+      }
+      return [x, z];
     },
     clear(x, z, r) {
       for (let j = ix(z - r); j <= ix(z + r); j++) for (let i = ix(x - r); i <= ix(x + r); i++) {
@@ -553,10 +566,11 @@ const debris = (() => {
         if (P[i3 + 1] < -MAXD - 50 || AGE[i] > 40) { d.kill(i); i--; continue; }
         if (REST[i] > 0.35) { // 내려앉음 → 잔해
           if (SZ[i3] > 2.5 && Math.random() < 0.35) sfx.thud(P[i3], P[i3 + 2], SZ[i3]);
+          { const [sx2, sz2] = pile.slide(P[i3], P[i3 + 2], Math.max(SZ[i3], SZ[i3 + 1], SZ[i3 + 2])); P[i3] = sx2; P[i3 + 2] = sz2; P[i3 + 1] = floorAt(sx2, sz2) + half * 0.8; }
           q.fromArray(Q, i * 4);
           const rs = rubbleL.add(P[i3], P[i3 + 1], P[i3 + 2], SZ[i3], SZ[i3 + 1], SZ[i3 + 2], q, C[i3], C[i3 + 1], C[i3 + 2], STY[i]);
           rubIdx.add(rs, P[i3], P[i3 + 2]);
-          pile.raise(P[i3], P[i3 + 2], Math.max(SZ[i3], SZ[i3 + 2]) * 0.35, P[i3 + 1] + half * 0.6 - groundH(P[i3], P[i3 + 2]));
+          pile.raise(P[i3], P[i3 + 2], Math.max(SZ[i3], SZ[i3 + 2]) * 0.35, P[i3 + 1] + half * 0.25 - groundH(P[i3], P[i3 + 2]));
           if (TAG[i] > 0) batLanded(TAG[i], Math.hypot(P[i3] - OX[i * 2], P[i3 + 2] - OX[i * 2 + 1]), P[i3], P[i3 + 1], P[i3 + 2]);
           d.kill(i); i--; continue;
         }
@@ -1896,7 +1910,7 @@ $('startBtn').onclick = () => {
   setTimeout(() => toast(T('hint'), 3500), 400);
 };
 window.__sfxState = () => sfx.ctx && sfx.ctx.state;
-window.__smash = { screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+window.__smash = { rubbleStats: () => { let mx = 0, hi = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const h = L.pos[k * 3 + 1] - groundH(L.pos[k * 3], L.pos[k * 3 + 2]); if (h > mx) mx = h; if (h > 20) hi++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
 function warmup() {
   const P = new THREE.Vector3(0, -500, 0);
   fireball(P.x, P.y, P.z, 1, 0.01); ring(P.x, P.y, P.z, 1, 0.01);
