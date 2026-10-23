@@ -623,13 +623,14 @@ SCENE.buildings.forEach((src, bi) => {
   const loc = p.map(([x, z]) => [cs * x + sn * z, -sn * x + cs * z]);
   const us = loc.map((v) => v[0]), ws = loc.map((v) => v[1]);
   const areaM = Math.abs(p.reduce((a, v, i) => { const w = p[(i + 1) % p.length]; return a + v[0] * w[1] - w[0] * v[1]; }, 0) / 2);
-  const cell = Math.max(src.s ? 4 : 5, Math.ceil(Math.sqrt(areaM / 700)));
+  const nyV = Math.min(src.lv, 40); // 블록 층 수 상한(초고층은 한 블록이 여러 층)
+  const cell = Math.max(src.s ? 4 : 5, Math.ceil(Math.sqrt(areaM / 700)), Math.ceil(Math.sqrt(areaM * nyV / 22000)));
   const u0 = Math.min(...us), w0 = Math.min(...ws);
   const nx = Math.max(1, Math.ceil((Math.max(...us) - u0) / cell)), nz = Math.max(1, Math.ceil((Math.max(...ws) - w0) / cell));
   const cellsIn = [];
   for (let a = 0; a < nx; a++) for (let c = 0; c < nz; c++) if (polyInside(u0 + (a + 0.5) * cell, w0 + (c + 0.5) * cell, loc)) cellsIn.push(a * nz + c);
   if (!cellsIn.length) cellsIn.push(((nx / 2) | 0) * nz + ((nz / 2) | 0));
-  const ny = src.lv, fh = src.h / ny;
+  const ny = nyV, fh = src.h / ny;
   const palette = src.s ? SITE_COLORS : CITY_COLORS;
   const color = palette[(src.id >> 3) % palette.length];
   // 통짜 메시
@@ -1444,11 +1445,12 @@ addEventListener('resize', () => {
 });
 
 // ───────────────────────── 랭킹 (Supabase RPC) ─────────────────────────
-const RANK_ON = !!(CFG.supabaseUrl && CFG.supabaseKey);
-async function rpc(fn, args) {
-  const r = await fetch(`${CFG.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: CFG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
-  if (!r.ok) throw new Error(`${r.status}`);
-  return r.json();
+const RANK_ON = !!CFG.rankApi;
+async function api(path, body) {
+  const r = await fetch(`${CFG.rankApi}/${path}`, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok && !(j && j.reason)) throw new Error(`${r.status}`);
+  return j;
 }
 const escH = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let submitted = false;
@@ -1457,7 +1459,7 @@ async function loadBoard(highlight) {
   if (!RANK_ON) { el.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요.</p>'; return; }
   el.innerHTML = '<p class="muted">불러오는 중…</p>';
   try {
-    const rows = await rpc('smash_top', { p_company: CFG.code, p_limit: 20 });
+    const rows = await api(`board?company=${CFG.code}&limit=20`);
     el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${Number(r.score).toLocaleString()}</span></li>`).join('')}</ol>` : '<p class="muted">아직 기록이 없어요. 첫 번째로 이름을 올리세요!</p>';
   } catch (e) { el.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
 }
@@ -1467,7 +1469,7 @@ async function submitScore() {
   try { localStorage.setItem('smash-nick', nick); } catch (e) {}
   $('submitBtn').disabled = true; $('submitMsg').textContent = '등록 중…';
   try {
-    const r = await rpc('smash_submit', { p_company: CFG.code, p_nick: nick, p_score: Math.round(score), p_collapsed: collapsedSite, p_rank: RANKS[maxRank][0] });
+    const r = await api('score', { company: CFG.code, nick, score: Math.round(score), collapsed: collapsedSite, rank: RANKS[maxRank][0] });
     if (r.ok) { submitted = true; $('submitMsg').textContent = `${CFG.company} ${r.position}위로 등록했어요!`; loadBoard(nick.slice(0, 12)); }
     else { $('submitMsg').textContent = r.reason === 'too_fast' ? '잠시 후 다시 등록해 주세요' : '등록하지 못했어요'; $('submitBtn').disabled = false; }
   } catch (e) { $('submitMsg').textContent = '등록하지 못했어요'; $('submitBtn').disabled = false; }

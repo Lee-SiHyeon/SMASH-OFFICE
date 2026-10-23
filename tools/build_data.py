@@ -111,7 +111,9 @@ for bid, t, r in cands:
     if t.get('building') in ('industrial', 'factory', 'warehouse'): fh = 7.0
     if h is None: h = (lv or (8 if insite else 5)) * fh
     if lv is None: lv = max(1, round(h / fh))
-    lv = int(max(1, min(lv, 60)))
+    ov = cfg.get('override', {}).get(t.get('name', ''))
+    if ov: h, lv = ov
+    lv = int(max(1, min(lv, 120)))
     k = (round(cx), round(cz))
     if k in seen_cent:  # 같은 자리 중복(way와 relation 양쪽에 있는 경우)
         continue
