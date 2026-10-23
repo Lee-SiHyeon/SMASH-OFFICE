@@ -40,7 +40,9 @@ for code in codes:
         html = html.replace('<html lang="ko">', f'<html lang="{lang}">')
     html = html.replace('/*CONFIG*/', safe(json.dumps(cfg, ensure_ascii=False)))
     html = html.replace('/*SCENE*/', safe((root / f'data/{code}.json').read_text()))
-    if SHARED: html = html.replace('<script>/*BUNDLE*/</script>', f'<script src="../{eng}"></script>')
+    if SHARED:  # 주소 끝에 / 가 없어도(lifehackailab.com/smash/xxx) 엔진 경로가 맞게 계산
+        loader = "<script>(function(){var h=location.href.replace(/[?#].*$/,'');if(!/\\/$|\\.html$/.test(h))h+='/';document.write('<script src=\"'+new URL('../%s',h).href+'\"><\\/script>')})()</script>" % eng
+        html = html.replace('<script>/*BUNDLE*/</script>', loader)
     else: html = html.replace('/*BUNDLE*/', safe(bundle))
     out = root / 'docs' / code / 'index.html'; out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html)
