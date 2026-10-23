@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>회사 부수기 — 정신나간 직장인의 회사 부수기</title>
+<meta name="description" content="지도에서 회사를 골라 3D로 부수는 스트레스 해소 게임. LG, 삼성, SK하이닉스, 현대차, 판교, 네이버, 보라매병원.">
+<meta property="og:title" content="회사 부수기 — 지도에서 회사를 골라 부수세요">
+<meta property="og:description" content="정신나간 직장인의 회사 부수기. 사직서 폭탄부터 퇴사 핵폭탄까지">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lee-sihyeon.github.io/SMASH-OFFICE/">
+<meta property="og:image" content="https://lee-sihyeon.github.io/SMASH-OFFICE/lgsp/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23ff6a2b%22/%3E%3Cpath d=%22M8 24V12l4-3v15M14 24V7l5 3v14M21 24V14l3 2v8%22 stroke=%22white%22 stroke-width=%222%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#0d1118;--panel:#151b26;--line:rgba(255,255,255,.1);--fg:#f2f5f9;--muted:#9aa6b6;--accent:#ff6a2b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
+#app{display:grid;grid-template-columns:380px 1fr;height:100%}
+#side{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+header{padding:20px 20px 14px}
+.series{color:var(--accent);font-weight:800;font-size:12px}
+h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
+.sub{color:var(--muted);font-size:13px;line-height:1.5}
+#chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 12px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.chip.on{background:var(--fg);color:#111;border-color:var(--fg)}
+#list{overflow:auto;padding:0 12px 16px;flex:1}
+.card{display:flex;gap:12px;align-items:center;padding:11px 10px;border-radius:12px;cursor:pointer;border:1px solid transparent}
+.card:hover,.card.sel{background:rgba(255,255,255,.05);border-color:var(--line)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.card .t{flex:1;min-width:0}
+.card b{display:block;font-size:15px}
+.card span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go{background:var(--accent);color:#fff;text-decoration:none;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;white-space:nowrap}
+#map{height:100%;background:#cfd6dc}
+footer{padding:10px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.6}
+footer a{color:#ffb38f}
+.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);display:grid;place-items:center}
+.pin i{transform:rotate(45deg);color:#fff;font-style:normal;font-weight:900;font-size:11px}
+.leaflet-popup-content-wrapper{border-radius:14px}
+.pop{font-family:inherit;min-width:200px}
+.pop .g{font-size:11px;font-weight:800}
+.pop h3{margin:2px 0 4px;font-size:17px}
+.pop p{margin:0 0 10px;color:#4a5566;font-size:12px}
+.pop .go{display:inline-block}
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:46vh 1fr}
+  #map{order:-1}
+  #side{border-right:0;border-top:1px solid var(--line)}
+  header{padding:14px 16px 10px}h1{font-size:22px}
+  #chips{padding:0 16px 10px}
+  footer{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header>
+      <div class="series">정신나간 직장인의 회사 부수기</div>
+      <h1>어느 회사를 부술까?</h1>
+      <div class="sub">지도에서 회사를 고르세요. 실제 건물 배치(OpenStreetMap)를 3D로 부숩니다. 사직서 폭탄부터 퇴사 핵폭탄까지.</div>
+    </header>
+    <div id="chips"></div>
+    <div id="list"></div>
+    <footer>회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자, © CARTO<br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues">우리 회사도 넣어 줘 →</a></footer>
+  </aside>
+  <div id="map"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const ITEMS = /*ITEMS*/;
+const COL = { LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a' };
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([36.9, 127.6], 7);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 18, subdomains: 'abcd', attribution: '© OpenStreetMap 기여자 © CARTO' }).addTo(map);
+const markers = {};
+let group = '전체';
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+for (const it of ITEMS) {
+  const icon = L.divIcon({ className: '', html: `<div class="pin" style="background:${COL[it.group] || '#555'}"><i>${esc(it.group.slice(0, 2))}</i></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
+  const m = L.marker([it.lat, it.lon], { icon, title: it.name }).addTo(map);
+  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>부술 건물 ${it.n}동</p><a class="go" href="${it.code}/">부수러 가기 →</a></div>`);
+  m.on('click', () => select(it.code, false));
+  markers[it.code] = m;
+}
+function select(code, fly) {
+  document.querySelectorAll('.card').forEach((c) => c.classList.toggle('sel', c.dataset.code === code));
+  const it = ITEMS.find((i) => i.code === code);
+  if (fly) { map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
+}
+function render() {
+  const groups = ['전체', ...new Set(ITEMS.map((i) => i.group))];
+  document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
+  const shown = ITEMS.filter((i) => group === '전체' || i.group === group);
+  document.getElementById('list').innerHTML = shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${it.n}동 · ${esc(it.tag)}</span></div><a class="go" href="${it.code}/">부수기</a></div>`).join('');
+  document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
+  for (const it of ITEMS) { const on = group === '전체' || it.group === group; const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
+}
+function fit() { const pts = ITEMS.filter((i) => group === '전체' || i.group === group).map((i) => [i.lat, i.lon]); if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); }
+render(); fit();
+</script>
+</body>
+</html>

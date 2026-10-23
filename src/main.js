@@ -9,11 +9,20 @@ const IS_MOBILE = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
 
 // ───────────────────────── 기본 세팅 ─────────────────────────
 const canvas = document.getElementById('stage');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.5 : 2));
+// GPU 이름으로 소프트웨어 렌더링(하드웨어 가속 꺼짐) 감지
+const GPU_NAME = (() => { try { const g = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl'); const e = g && g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) { return ''; } })();
+const SOFTWARE_GL = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(GPU_NAME);
+const QUALITY = [ // 0 낮음 · 1 보통 · 2 높음
+  { name: '낮음', shadow: 0, px: 0.9e6, dprMax: 0.8, fxk: 0.35 },
+  { name: '보통', shadow: 2048, px: 2.1e6, dprMax: 1.0, fxk: 0.6 },
+  { name: '높음', shadow: 4096, px: 4.2e6, dprMax: 1.5, fxk: 1 },
+];
+let qLevel = (() => { try { const v = localStorage.getItem('smash-q'); if (v !== null) return +v; } catch (e) {} return SOFTWARE_GL ? 0 : 1; })();
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_MOBILE && !SOFTWARE_GL && devicePixelRatio < 1.5, powerPreference: 'high-performance' });
+renderer.setPixelRatio(1);
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = IS_MOBILE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;
 renderer.shadowMap.needsUpdate = true;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -23,14 +32,15 @@ const scene = new THREE.Scene();
 const world = new THREE.Group(); // 지진 때 통째로 흔들리는 무리
 scene.add(world);
 const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 1, 6000);
-camera.position.set(-140, 330, 520);
+const SITE_EXT = (() => { let m = 120; for (const r of SCENE.site) for (const [x, z] of r) m = Math.max(m, Math.hypot(x, z)); return Math.min(m, SCENE.radius); })();
+{ const d = SITE_EXT * 1.55 + 160; camera.position.set(-0.22 * d, 0.62 * d, 0.95 * d); }
 const controls = new OrbitControls(camera, canvas);
-controls.target.set(0, 0, -10);
+controls.target.set(0, 0, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 25;
-controls.maxDistance = 1700;
+controls.maxDistance = Math.max(1700, SCENE.radius * 2.6);
 controls.screenSpacePanning = false;
 controls.update();
 
@@ -46,13 +56,13 @@ const sky = new THREE.Mesh(
       void main(){ float h = clamp(vP.y,0.,1.); vec3 c = mix(uHor,uTop,pow(h,0.55)); c = mix(c, c*0.25, uDark); gl_FragColor = vec4(c,1.); }`,
   }));
 scene.add(sky);
-scene.fog = new THREE.Fog(SKY_DAY.fog.clone(), 900, 3200);
+scene.fog = new THREE.Fog(SKY_DAY.fog.clone(), Math.max(900, SCENE.radius * 1.3), Math.max(3200, SCENE.radius * 4.2));
 
 const hemi = new THREE.HemisphereLight('#dfe9ff', '#7a7466', 1.1);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight('#fff3e0', 2.6);
-sun.castShadow = true;
-sun.shadow.mapSize.set(IS_MOBILE ? 2048 : 4096, IS_MOBILE ? 2048 : 4096);
+sun.castShadow = QUALITY[qLevel].shadow > 0;
+sun.shadow.mapSize.set(QUALITY[qLevel].shadow || 1024, QUALITY[qLevel].shadow || 1024);
 Object.assign(sun.shadow.camera, { left: -480, right: 480, top: 480, bottom: -480, near: 10, far: 2000 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.6;
@@ -160,7 +170,7 @@ const CITY_COLORS = ['#f0e9dc', '#e6e1d6', '#dcd8cf', '#d9dfe3', '#efe4d2', '#cf
 
 // ───────────────────────── 땅 (높이장) ─────────────────────────
 const S = Math.ceil(SCENE.radius * 2.3 / 100) * 100; // 한 변 길이(m)
-const GN = Math.round(S / 4); // 4 m 간격
+const GN = Math.round(S / Math.max(4, S / 480)); // 4 m 간격(큰 부지는 넓게)
 const GD = S / GN;
 const MAXD = 420; // 이 깊이 = 지구 중심
 const hgt = new Float32Array((GN + 1) * (GN + 1));
@@ -422,7 +432,7 @@ const rubble = {
 // 날아다니는 조각
 const _wq = new THREE.Quaternion(), _dq = new THREE.Quaternion();
 const debris = (() => {
-  const cap = IS_MOBILE ? 3000 : 6500;
+  const cap = IS_MOBILE ? 3000 : 5000;
   const m = new THREE.InstancedMesh(BOX, BLOCK_MATS, cap);
   m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -553,6 +563,54 @@ const trees = (() => {
 // ───────────────────────── 건물 ─────────────────────────
 const buildings = [];
 const intactGroup = new THREE.Group(); world.add(intactGroup);
+// 구역(250 m)마다 벽·지붕을 한 덩어리로 합침. 건물이 부서지면 그 건물 꼭짓점만 한 점으로 접어서 숨김
+const wallMerged = new THREE.MeshStandardMaterial({ map: dayTex, emissiveMap: nightTex, emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.42, metalness: 0.15, vertexColors: true });
+const roofMerged = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: true });
+const chunks = new Map();
+function mergeAdd(geo, hex, site, bi, p) {
+  const cx = p.reduce((a, v) => a + v[0], 0) / p.length, cz = p.reduce((a, v) => a + v[1], 0) / p.length;
+  const key = `${Math.floor(cx / 250)},${Math.floor(cz / 250)}`;
+  if (!chunks.has(key)) chunks.set(key, { wall: { pos: [], nor: [], uv: [], col: [], owners: [] }, roof: { pos: [], nor: [], uv: [], col: [], owners: [] } });
+  const ch = chunks.get(key), col = new THREE.Color(hex), rc = col.clone().multiplyScalar(0.78);
+  const P = geo.attributes.position.array, N = geo.attributes.normal.array, U = geo.attributes.uv.array;
+  const ref = { key, ranges: [] };
+  for (const g of geo.groups) {
+    const t = g.materialIndex === 1 ? ch.wall : ch.roof, c = g.materialIndex === 1 ? col : rc;
+    const start = t.pos.length / 3;
+    for (let v = g.start; v < g.start + g.count; v++) {
+      t.pos.push(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); t.nor.push(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]); t.uv.push(U[v * 2], U[v * 2 + 1]); t.col.push(c.r, c.g, c.b);
+    }
+    t.owners.push([start, bi]);
+    ref.ranges.push([g.materialIndex === 1 ? 'wall' : 'roof', start, g.count]);
+  }
+  return ref;
+}
+function buildChunks() {
+  for (const [key, ch] of chunks) {
+    for (const kind of ['wall', 'roof']) {
+      const t = ch[kind]; if (!t.pos.length) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(t.pos, 3).setUsage(THREE.DynamicDrawUsage));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(t.nor, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(t.uv, 2));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(t.col, 3));
+      g.computeBoundingSphere(); g.computeBoundingBox();
+      const m = new THREE.Mesh(g, kind === 'wall' ? wallMerged : roofMerged);
+      m.castShadow = true; m.receiveShadow = true; m.userData.owners = t.owners;
+      intactGroup.add(m); ch[kind + 'Mesh'] = m; t.pos = t.nor = t.uv = t.col = null;
+    }
+  }
+}
+function hideIntact(b) {
+  const ch = chunks.get(b.mesh.key);
+  for (const [kind, start, count] of b.mesh.ranges) {
+    const m = ch[kind + 'Mesh']; if (!m) continue;
+    const a = m.geometry.attributes.position, x = a.array[start * 3], y = a.array[start * 3 + 1], z = a.array[start * 3 + 2];
+    for (let v = start; v < start + count; v++) { a.array[v * 3] = x; a.array[v * 3 + 1] = y; a.array[v * 3 + 2] = z; }
+    a.addUpdateRange(start * 3, count * 3); a.needsUpdate = true;
+  }
+  b.mesh.hidden = true;
+}
 const UP = new THREE.Vector3(0, 1, 0);
 function polyInside(x, z, p) { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const [x1, z1] = p[i], [x2, z2] = p[j]; if ((z1 > z) !== (z2 > z) && x < (x2 - x1) * (z - z1) / (z2 - z1) + x1) c = !c; } return c; }
 
@@ -564,7 +622,8 @@ SCENE.buildings.forEach((src, bi) => {
   const cs = Math.cos(th), sn = Math.sin(th);
   const loc = p.map(([x, z]) => [cs * x + sn * z, -sn * x + cs * z]);
   const us = loc.map((v) => v[0]), ws = loc.map((v) => v[1]);
-  const cell = src.s ? 4 : 5;
+  const areaM = Math.abs(p.reduce((a, v, i) => { const w = p[(i + 1) % p.length]; return a + v[0] * w[1] - w[0] * v[1]; }, 0) / 2);
+  const cell = Math.max(src.s ? 4 : 5, Math.ceil(Math.sqrt(areaM / 700)));
   const u0 = Math.min(...us), w0 = Math.min(...ws);
   const nx = Math.max(1, Math.ceil((Math.max(...us) - u0) / cell)), nz = Math.max(1, Math.ceil((Math.max(...ws) - w0) / cell));
   const cellsIn = [];
@@ -579,9 +638,8 @@ SCENE.buildings.forEach((src, bi) => {
   geo.rotateX(-Math.PI / 2);
   const uv = geo.attributes.uv; const g1 = geo.groups.find((g) => g.materialIndex === 1);
   if (g1) for (let i = g1.start; i < g1.start + g1.count; i++) { const v = geo.index ? geo.index.getX(i) : i; uv.setXY(v, uv.getX(v) / (cell * ATLAS), uv.getY(v) / (fh * ATLAS)); }
-  const mesh = new THREE.Mesh(geo, intactMat(color));
-  mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.b = bi;
-  intactGroup.add(mesh);
+  const mesh = mergeAdd(geo, color, src.s, bi, p);
+  geo.dispose();
   const xs = p.map((v) => v[0]), zs = p.map((v) => v[1]);
   buildings.push({
     i: bi, id: src.id, name: src.n, site: !!src.s, h: src.h, poly: p, mesh, color: new THREE.Color(color),
@@ -592,6 +650,7 @@ SCENE.buildings.forEach((src, bi) => {
     quat: new THREE.Quaternion().setFromAxisAngle(UP, -th),
   });
 });
+buildChunks();
 const SITE_VOL = buildings.filter((b) => b.site).reduce((a, b) => a + b.vol, 0);
 const SITE_COUNT = buildings.filter((b) => b.site).length;
 
@@ -639,7 +698,7 @@ function voxelize(b) {
     }
   }
   b.vox = vox; b.alive = made;
-  b.mesh.visible = false; intactGroup.remove(b.mesh);
+  hideIntact(b);
   return vox;
 }
 const vIdx = (b, a, y, c) => (a * b.ny + y) * b.nz + c;
@@ -792,7 +851,7 @@ function obliterate(b, cx, cz, R, budget, gentle = false) {
     else debris.spawn(x, y, z, sz, b.fh * rnd(0.8, 1.4), sz, b.quat, col.r, col.g, col.b, dx / d * f, rnd(25, 70), dz / d * f, 3);
   }
   if (b.vox) { for (let i = 0; i < b.vox.length; i++) if (b.vox[i] >= 0) { blocks.remove(b.vox[i]); b.vox[i] = -1; } }
-  else { b.mesh.visible = false; intactGroup.remove(b.mesh); }
+  else hideIntact(b);
   if (b.site) destroyedSite += b.alive;
   pts(10 * b.alive, b.cx, b.h / 2, b.cz, true);
   if (gentle) for (let i = 0; i < 14 * FXK; i++) smoke.spawn(b.cx + rnd(-20, 20), rnd(2, b.h * 0.6), b.cz + rnd(-20, 20), rnd(-4, 4), rnd(1, 5), rnd(-4, 4), rnd(18, 34), 5, [0.75, 0.72, 0.68], [0.6, 0.58, 0.56], 0.55, 1.5);
@@ -856,7 +915,7 @@ class Particles {
 }
 const fire = new Particles(IS_MOBILE ? 2500 : 5000, true);
 const smoke = new Particles(IS_MOBILE ? 3000 : 6000, false);
-const FXK = IS_MOBILE ? 0.5 : 1; // 모바일은 연기·불꽃 양 절반
+let FXK = Math.min(QUALITY[qLevel].fxk, IS_MOBILE ? 0.5 : 1); // 화질에 따라 연기·불꽃 양
 
 // 충격파 링, 불덩이
 const fx = [];
@@ -1254,7 +1313,7 @@ function setNight(on) {
   skyU.uTop.value.copy(k.top); skyU.uHor.value.copy(k.hor); scene.fog.color.copy(k.fog);
   hemi.intensity = on ? 0.18 : 1.1; sun.intensity = on ? 0.12 : 2.6; sun.color.set(on ? '#9fb4ff' : '#fff3e0');
   wallInst.emissiveIntensity = on ? 1.6 : 0;
-  for (const [, m] of intactMats) m[1].emissiveIntensity = on ? 1.6 : 0;
+  wallMerged.emissiveIntensity = on ? 1.6 : 0;
   stars.visible = on; $('nightBtn').classList.toggle('on', on);
 }
 
@@ -1373,28 +1432,100 @@ addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
   const n = +e.key; if (n >= 1 && n <= TOOLS.length) selectTool(TOOLS[n - 1].id);
   if (e.key === 'n' || e.key === 'N') setNight(!nightOn);
+  if (e.key === 'l' || e.key === 'L') $('labelBtn').click();
   if (e.key === 'm' || e.key === 'M') toggleMute();
   if (e.key === 'Escape') { $('cardModal').hidden = true; }
 });
 function toggleMute() { sfx.muted = !sfx.muted; $('muteBtn').classList.toggle('on', sfx.muted); $('muteBtn').textContent = sfx.muted ? '소리 꺼짐' : '소리'; }
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+  if (typeof setDpr === 'function' && dpr > dprCap()) setDpr(dprCap());
 });
+
+// ───────────────────────── 동 이름표 ─────────────────────────
+let labelsOn = true;
+const labels = buildings.filter((b) => b.site && b.name).map((b) => {
+  const el = document.createElement('div'); el.className = 'blabel'; el.textContent = b.name;
+  $('labels').appendChild(el); return { b, el, on: false };
+});
+const _lp = new THREE.Vector3(), occ = new Set();
+function updateLabels() {
+  const far = camera.position.distanceTo(controls.target) > SITE_EXT * 3.2 + 900;
+  occ.clear();
+  const W = innerWidth, H = innerHeight;
+  const vis = [];
+  for (const L of labels) {
+    const b = L.b; let show = labelsOn && !far && !b.gone && !b.collapsed;
+    if (show) {
+      _lp.set(b.cx, b.h * (b.vox ? Math.max(0.15, b.alive / b.vol) : 1) + 4, b.cz).project(camera);
+      show = _lp.z < 1 && Math.abs(_lp.x) < 1.05 && Math.abs(_lp.y) < 1.05;
+      if (show) vis.push([L, (_lp.x * 0.5 + 0.5) * W, (-_lp.y * 0.5 + 0.5) * H, _lp.z]);
+    }
+    if (!show && L.on) { L.el.style.display = 'none'; L.on = false; }
+  }
+  vis.sort((a, b) => a[3] - b[3]); // 가까운 것부터 자리 차지
+  for (const [L, x, y] of vis) {
+    const k = `${Math.round(x / 84)},${Math.round(y / 20)}`;
+    if (occ.has(k)) { if (L.on) { L.el.style.display = 'none'; L.on = false; } continue; }
+    occ.add(k);
+    if (!L.on) { L.el.style.display = ''; L.on = true; }
+    L.el.style.transform = `translate(${x | 0}px,${y | 0}px) translate(-50%,-100%)`;
+  }
+}
+function buildingFromHit(h) {
+  if (!h) return null;
+  if (h.object === blocks.mesh) { const o = blocks.owner[h.instanceId]; return o >= 0 ? buildings[o] : null; }
+  const own = h.object.userData.owners; if (!own) return null;
+  const v = h.faceIndex * 3; let lo = 0, hi = own.length - 1, r = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (own[m][0] <= v) { r = m; lo = m + 1; } else hi = m - 1; }
+  return r >= 0 ? buildings[own[r][1]] : null;
+}
+let hoverT = 0;
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'mouse' || e.buttons || laser.drawing) { $('hover').hidden = true; return; }
+  const now = performance.now(); if (now - hoverT < 90) return; hoverT = now;
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const b = buildingFromHit(ray.intersectObjects([...intactGroup.children, blocks.mesh], false)[0]);
+  const el = $('hover');
+  if (!b || b.gone) { el.hidden = true; return; }
+  const left = b.vox ? Math.round(b.alive / b.vol * 100) : 100;
+  el.innerHTML = `<b>${b.name || (b.site ? CFG.company : '주변 건물')}</b><span>${b.site ? CFG.company + ' · ' : ''}${Math.round(b.h)} m · 남은 ${left}%</span>`;
+  el.style.transform = `translate(${e.clientX + 14}px,${e.clientY + 14}px)`; el.hidden = false;
+});
+canvas.addEventListener('pointerleave', () => ($('hover').hidden = true));
 
 // ───────────────────────── 루프 ─────────────────────────
 let lastT = performance.now(), hudT = 0, shadowSkip = 0;
 // 해상도 자동 조절: 느리면 내리고, 여유 있으면 올림
-const DPR_MAX = Math.min(devicePixelRatio, IS_MOBILE ? 2 : 2), DPR_MIN = IS_MOBILE ? 0.6 : 0.75;
-let dpr = Math.min(DPR_MAX, IS_MOBILE ? 1.25 : 1.5), dprAcc = 0, dprN = 0;
+const DPR_MIN = 0.5;
+const dprCap = () => Math.min(devicePixelRatio, QUALITY[qLevel].dprMax, Math.sqrt(QUALITY[qLevel].px / (innerWidth * innerHeight)));
+let dpr = dprCap(), dprAcc = 0, dprN = 0, slowSec = 0;
 renderer.setPixelRatio(dpr);
+function setDpr(v) { v = Math.round(v * 20) / 20; if (v !== dpr) { dpr = v; renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); } }
 function adaptDpr(rdt) {
   dprAcc += rdt; dprN++;
-  if (dprAcc < 1) return;
+  if (dprAcc < 0.75) return;
   const avg = dprAcc / dprN * 1000; dprAcc = 0; dprN = 0;
-  let next = dpr;
-  if (avg > 24) next = Math.max(DPR_MIN, dpr - 0.25);
-  else if (avg < 13 && dpr < DPR_MAX) next = Math.min(DPR_MAX, dpr + 0.125);
-  if (next !== dpr) { dpr = next; renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); }
+  if (avg > 21) {
+    if (dpr > DPR_MIN + 0.01) setDpr(Math.max(DPR_MIN, dpr * 0.85));
+    else if (++slowSec >= 3 && qLevel > 0) { setQuality(qLevel - 1, true); slowSec = 0; }
+  } else {
+    slowSec = 0;
+    if (avg < 12.5 && dpr < dprCap()) setDpr(Math.min(dprCap(), dpr + 0.1));
+  }
+}
+function setQuality(q, auto) {
+  qLevel = q; try { localStorage.setItem('smash-q', q); } catch (e) {}
+  const Q = QUALITY[q];
+  const want = Q.shadow > 0;
+  if (sun.castShadow !== want) { sun.castShadow = want; scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); }); }
+  if (want && sun.shadow.mapSize.x !== Q.shadow) { sun.shadow.mapSize.set(Q.shadow, Q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+  renderer.shadowMap.needsUpdate = true;
+  FXK = Math.min(Q.fxk, IS_MOBILE ? 0.5 : 1);
+  setDpr(dprCap());
+  const b = document.getElementById('qBtn'); if (b) b.textContent = `화질 ${Q.name}`;
+  if (auto) toast(`느려서 화질을 '${Q.name}'으로 낮췄어요`, 2200);
 }
 const perfLog = [], renderLog = [];
 function frame(now) {
@@ -1451,6 +1582,7 @@ function frame(now) {
   sky.position.copy(camera.position);
 
   hudT += rdt; if (hudT > 0.1) { hudT = 0; hud(); }
+  updateLabels();
   const c1 = performance.now();
   if (!BENCH) renderer.render(scene, camera);
   perfLog.push(c1 - c0); renderLog.push(performance.now() - c1); if (renderLog.length > 600) renderLog.shift(); if (perfLog.length > 600) perfLog.shift();
@@ -1468,6 +1600,11 @@ $('startTag').textContent = CFG.tagline;
 $('credit').innerHTML = `지도 © OpenStreetMap 기여자 (ODbL) · ${CFG.place} ${CFG.company} 건물 ${SITE_COUNT}동 · 비공식 패러디 게임`;
 buildDock();
 $('nightBtn').onclick = () => setNight(!nightOn);
+$('labelBtn').onclick = () => { labelsOn = !labelsOn; $('labelBtn').classList.toggle('on', labelsOn); };
+$('qBtn').textContent = `화질 ${QUALITY[qLevel].name}`;
+$('qBtn').onclick = () => setQuality((qLevel + 1) % QUALITY.length);
+$('hubBtn').href = CFG.hub || '../';
+if (SOFTWARE_GL) setTimeout(() => toast('브라우저 하드웨어 가속이 꺼져 있어 느릴 수 있어요 (설정 → 시스템 → 그래픽 가속 사용)', 6000), 1500);
 $('muteBtn').onclick = toggleMute;
 $('resetBtn').onclick = () => location.reload();
 $('cardBtn').onclick = makeCard;

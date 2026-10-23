@@ -48,6 +48,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .btn:hover{border-color:rgba(255,255,255,.3)}
 .btn.on{border-color:var(--accent);color:#ffd2bf}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#hubBtn{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#ffb38f;text-decoration:none}
+#hubBtn:hover{text-decoration:underline}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.blabel{position:absolute;left:0;top:0;padding:3px 8px;border-radius:7px;background:rgba(14,18,26,.72);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:700;white-space:nowrap;will-change:transform}
+.blabel::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-4px;border:4px solid transparent;border-top-color:rgba(14,18,26,.72);border-bottom:0}
+#hover{position:fixed;left:0;top:0;z-index:9;pointer-events:none;background:rgba(10,14,22,.9);border:1px solid var(--line);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+#hover[hidden]{display:none}#hover span{color:var(--muted);font-size:11px}
 #credit{position:fixed;left:16px;bottom:10px;font-size:11px;color:rgba(255,255,255,.55);z-index:4;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 #toast{position:fixed;left:50%;top:22px;transform:translate(-50%,-10px);padding:10px 18px;border-radius:999px;background:rgba(10,14,22,.85);border:1px solid var(--line);font-weight:800;font-size:16px;opacity:0;transition:.25s;z-index:8;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -81,6 +88,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #h-score{font-size:20px}.stat{font-size:11px}
   #bottom{top:auto;bottom:auto;right:10px;top:206px;flex-direction:column}
   #bottom .btn{padding:7px 9px;font-size:12px}
+  #hubBtn{font-size:11px;margin-top:3px}
+  .blabel{font-size:10px;padding:2px 6px}
   #credit{display:none}
   #toast{font-size:13px;top:auto;bottom:150px}
 }
@@ -89,7 +98,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <body>
 <canvas id="stage"></canvas>
 <div id="left">
-  <div id="brand" class="panel"><div id="series"></div><div id="title"></div></div>
+  <div id="brand" class="panel"><div id="series"></div><div id="title"></div><a id="hubBtn" href="../">다른 회사 고르기 →</a></div>
   <div id="dock" class="panel"></div>
   <div id="sliderWrap" class="panel" hidden><div class="row"><span id="sliderLabel"></span><span id="sliderVal"></span></div><input id="slider" type="range"></div>
   <div id="tip"></div>
@@ -103,13 +112,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="stat"><span>판 깊이</span><b id="h-depth">0 km</b></div>
 </div>
 <div id="bottom">
+  <button class="btn on" id="labelBtn" title="이름표 (L)">이름표</button>
+  <button class="btn" id="qBtn" title="화질">화질</button>
   <button class="btn" id="nightBtn" title="밤 (N)">밤</button>
   <button class="btn" id="muteBtn" title="소리 (M)">소리</button>
   <button class="btn" id="resetBtn">처음부터</button>
   <button class="btn primary" id="cardBtn">인증샷</button>
 </div>
 <div id="credit"></div>
+<div id="labels"></div>
 <div id="floaters"></div>
+<div id="hover" hidden></div>
 <div id="toast"></div>
 <div id="flash"></div>
 <div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row"><span>저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png">저장</a><button class="btn" id="cardClose">닫기</button></div></div></div>
