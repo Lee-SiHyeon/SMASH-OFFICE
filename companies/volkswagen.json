@@ -1,0 +1,17 @@
+{
+ "code": "volkswagen",
+ "region": "eu",
+ "lang": "en",
+ "group": "Auto",
+ "company": "Volkswagen Plant",
+ "place": "Wolfsburg, Germany",
+ "site": [
+  [
+   "way",
+   459317446
+  ]
+ ],
+ "tagline": "Das Auto. Das Burnout.",
+ "series": "Office Smash",
+ "alias": "volkswagen vw wolfsburg werk plant golf"
+}

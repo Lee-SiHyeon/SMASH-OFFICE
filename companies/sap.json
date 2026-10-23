@@ -1,0 +1,17 @@
+{
+ "code": "sap",
+ "region": "eu",
+ "lang": "en",
+ "group": "Tech",
+ "company": "SAP HQ",
+ "place": "Walldorf, Germany",
+ "site": [
+  [
+   "way",
+   238363150
+  ]
+ ],
+ "tagline": "Your vacation request is pending approval in 4 systems",
+ "series": "Office Smash",
+ "alias": "sap walldorf hasso-plattner-ring erp hana"
+}

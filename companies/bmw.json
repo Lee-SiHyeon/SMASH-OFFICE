@@ -1,0 +1,17 @@
+{
+ "code": "bmw",
+ "region": "eu",
+ "lang": "en",
+ "group": "Auto",
+ "company": "BMW HQ",
+ "place": "Munich, Germany",
+ "site": [
+  [
+   "way",
+   1091691148
+  ]
+ ],
+ "tagline": "Four cylinders, zero motivation",
+ "series": "Office Smash",
+ "alias": "bmw vierzylinder four cylinder tower munich münchen petuelring museum"
+}

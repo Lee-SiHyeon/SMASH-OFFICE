@@ -1,0 +1,21 @@
+{
+ "code": "siemens",
+ "region": "eu",
+ "lang": "en",
+ "group": "Tech",
+ "company": "Siemens HQ",
+ "place": "Munich, Germany",
+ "site": [
+  [
+   "relation",
+   6304661
+  ],
+  [
+   "way",
+   25507219
+  ]
+ ],
+ "tagline": "Engineered for overtime",
+ "series": "Office Smash",
+ "alias": "siemens konzernzentrale munich münchen wittelsbacherplatz"
+}
