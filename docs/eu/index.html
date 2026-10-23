@@ -60,12 +60,20 @@ footer a{color:#ffb38f}
 .pop p{margin:0 0 10px;color:#4a5566;font-size:12px}
 .pop .go{display:inline-block}
 @media (max-width:760px){
-  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:46vh minmax(0,1fr)}
-  #map{order:-1}
-  #side{border-right:0;border-top:1px solid var(--line)}
-  header{padding:14px 16px 10px}h1{font-size:22px}
-  #chips{padding:0 16px 10px}
-  footer{display:none}
+  html,body{height:auto}
+  #app{display:flex;flex-direction:column;height:auto}
+  #map{order:-1;height:36vh;min-height:220px;flex:none}
+  #side{display:block;border-right:0;border-top:1px solid var(--line);min-height:64vh}
+  header{padding:12px 16px 6px}h1{font-size:20px;margin:2px 0 0}.sub{display:none}
+  #regions,#chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #regions::-webkit-scrollbar,#chips::-webkit-scrollbar{display:none}
+  .rg,.chip{flex:none}
+  #tabs{padding:6px 16px 8px}
+  #searchWrap{position:sticky;top:0;z-index:20;background:var(--panel);padding:8px 16px}
+  #chips{padding:0 16px 8px}
+  #list,#rank{overflow:visible;padding-bottom:40px}
+  .card{padding:13px 10px}
+  footer{display:block}
 }
 </style>
 </head>
@@ -90,7 +98,7 @@ footer a{color:#ffb38f}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const ITEMS = [{"code": "deepmind", "region": "eu", "group": "AI", "name": "Google DeepMind", "place": "London, UK", "tag": "Solved protein folding, not the printer", "lat": 51.53792, "lon": -0.12622, "n": 1, "alias": "deepmind google london kings cross s2 handyside street alphafold"}, {"code": "airbus", "region": "eu", "group": "Aero", "name": "Airbus HQ", "place": "Toulouse, France", "tag": "Cleared for takeoff, stuck in a meeting", "lat": 43.62357, "lon": 1.38496, "n": 40, "alias": "airbus toulouse blagnac dewoitine a320 a350"}, {"code": "bmw", "region": "eu", "group": "Auto", "name": "BMW HQ", "place": "Munich, Germany", "tag": "Four cylinders, zero motivation", "lat": 48.17685, "lon": 11.5609, "n": 9, "alias": "bmw vierzylinder four cylinder tower munich münchen petuelring museum"}, {"code": "mercedes", "region": "eu", "group": "Auto", "name": "Mercedes-Benz Plant", "place": "Stuttgart, Germany", "tag": "The best or nothing. Today: nothing.", "lat": 48.7854, "lon": 9.23914, "n": 116, "alias": "mercedes benz daimler untertürkheim stuttgart werk plant"}, {"code": "volkswagen", "region": "eu", "group": "Auto", "name": "Volkswagen Plant", "place": "Wolfsburg, Germany", "tag": "Das Auto. Das Burnout.", "lat": 52.43592, "lon": 10.76095, "n": 207, "alias": "volkswagen vw wolfsburg werk plant golf"}, {"code": "nestle", "region": "eu", "group": "Food", "name": "Nestlé HQ", "place": "Vevey, Switzerland", "tag": "Have a break. Not you, though.", "lat": 46.4665, "lon": 6.83486, "n": 1, "alias": "nestle nestlé vevey avenue nestle nescafe kitkat"}, {"code": "lvmh", "region": "eu", "group": "Luxury", "name": "LVMH HQ", "place": "Paris, France", "tag": "Luxury brands, budget coffee", "lat": 48.86611, "lon": 2.30575, "n": 1, "alias": "lvmh louis vuitton moet hennessy paris avenue montaigne"}, {"code": "novo", "region": "eu", "group": "Pharma", "name": "Novo Nordisk HQ", "place": "Bagsværd, Denmark", "tag": "Losing weight, gaining workload", "lat": 55.75477, "lon": 12.45238, "n": 71, "alias": "novo nordisk bagsvaerd bagsværd ozempic wegovy insulin"}, {"code": "asml", "region": "eu", "group": "Tech", "name": "ASML HQ", "place": "Veldhoven, Netherlands", "tag": "Printing 2nm chips, still waiting on one PDF", "lat": 51.40376, "lon": 5.41233, "n": 29, "alias": "asml veldhoven euv lithography de run"}, {"code": "ericsson", "region": "eu", "group": "Tech", "name": "Ericsson HQ", "place": "Kista, Sweden", "tag": "Five bars of signal, zero bars of energy", "lat": 59.40515, "lon": 17.95394, "n": 1, "alias": "ericsson kista stockholm torshamnsgatan 5g telecom"}, {"code": "sap", "region": "eu", "group": "Tech", "name": "SAP HQ", "place": "Walldorf, Germany", "tag": "Your vacation request is pending approval in 4 systems", "lat": 49.29441, "lon": 8.63992, "n": 29, "alias": "sap walldorf hasso-plattner-ring erp hana"}, {"code": "siemens", "region": "eu", "group": "Tech", "name": "Siemens HQ", "place": "Munich, Germany", "tag": "Engineered for overtime", "lat": 48.14408, "lon": 11.57554, "n": 2, "alias": "siemens konzernzentrale munich münchen wittelsbacherplatz"}, {"code": "spotify", "region": "eu", "group": "Tech", "name": "Spotify HQ", "place": "Stockholm, Sweden", "tag": "Now playing: Monday Blues (Extended Mix)", "lat": 59.33068, "lon": 18.06782, "n": 1, "alias": "spotify stockholm regeringsgatan gallerian music"}];
-const H = {"title": "Office Smash — pick a company on the map and wreck it", "desc": "Office Smash: wreck real company campuses in 3D, from the Resignation Bomb to the Quit Nuke.", "series": "Office Smash", "h1": "Which European office will you wreck?", "sub": "Pick a company on the map. Real building layouts (OpenStreetMap) in 3D — from the Resignation Bomb to the Quit Nuke.", "tabList": "Companies", "tabRank": "Ranking", "today": "Today", "total": "All time", "searchPh": "Search company or city (e.g. Google, Seattle)", "foot": "Unofficial parody game, not affiliated with any company. Map © OpenStreetMap contributors", "request": "Request your company →", "all": "All", "bldgs": "{0} buildings", "goLong": "Smash it →", "go": "Smash", "none": "No match. Request it with the link below.", "rOff": "Ranking server coming soon.", "loading": "Loading…", "plays": "{0} plays", "challenge": "Take the challenge →", "noRec": "No records yet", "rFail": "Could not load the ranking.", "base": "../"};
+const H = {"title": "Office Smash — pick a company on the map and wreck it", "desc": "Office Smash: wreck real company campuses in 3D, from the Resignation Bomb to the Quit Nuke.", "series": "Office Smash", "h1": "Which European office will you wreck?", "sub": "Pick a company on the map. Real building layouts (OpenStreetMap) in 3D — from the Resignation Bomb to the Quit Nuke.", "tabList": "Companies", "tabRank": "Ranking", "today": "Today", "total": "All time", "searchPh": "Search company or city (e.g. Google, Seattle)", "foot": "Unofficial parody game, not affiliated with any company. Map © OpenStreetMap contributors", "request": "Request your company →", "all": "All", "bldgs": "{0} buildings", "bldg1": "1 building", "goLong": "Smash it →", "go": "Smash", "none": "No match. Request it with the link below.", "rOff": "Ranking server coming soon.", "loading": "Loading…", "plays": "{0} plays", "challenge": "Take the challenge →", "noRec": "No records yet", "rFail": "Could not load the ranking.", "base": "../"};
 const REGION = 'eu';
 document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
 document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "../"], ["us", "🇺🇸 USA", "../us/"], ["jp", "🇯🇵 日本", "../jp/"], ["cn", "🇨🇳 中国", "../cn/"], ["eu", "🇪🇺 Europe", "../eu/"], ["vn", "🇻🇳 Việt Nam", "../vn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
@@ -105,21 +113,21 @@ const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>'
 for (const it of ITEMS) {
   const icon = L.divIcon({ className: '', html: `<div class="pin" style="background:${COL[it.group] || '#555'}"><i>${esc(it.group.slice(0, 2))}</i></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
   const m = L.marker([it.lat, it.lon], { icon, title: it.name }).addTo(map);
-  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>${H.bldgs.replace('{0}', it.n)}</p><a class="go" href="${H.base}${it.code}/">${H.goLong}</a></div>`);
+  m.bindPopup(`<div class="pop"><div class="g" style="color:${COL[it.group]}">${esc(it.group)} · ${esc(it.place)}</div><h3>${esc(it.name)}</h3><p>${esc(it.tag)}<br>${(it.n === 1 && H.bldg1) ? H.bldg1 : H.bldgs.replace('{0}', it.n)}</p><a class="go" href="${H.base}${it.code}/">${H.goLong}</a></div>`);
   m.on('click', () => select(it.code, false));
   markers[it.code] = m;
 }
 function select(code, fly) {
   document.querySelectorAll('.card').forEach((c) => c.classList.toggle('sel', c.dataset.code === code));
   const it = ITEMS.find((i) => i.code === code);
-  if (fly) { map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
+  if (fly) { if (innerWidth <= 760) window.scrollTo({ top: 0, behavior: 'smooth' }); map.flyTo([it.lat, it.lon], 14, { duration: 0.8 }); setTimeout(() => markers[code].openPopup(), 850); }
 }
 function render() {
   const groups = [H.all, ...new Set(ITEMS.map((i) => i.group))];
   document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
   document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
   const shown = ITEMS.filter((i) => (group === H.all || i.group === group) && match(i));
-  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}' — ${H.none}</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${H.bldgs.replace('{0}', it.n)} · ${esc(it.tag)}</span></div><a class="go" href="${H.base}${it.code}/">${H.go}</a></div>`).join('');
+  document.getElementById('list').innerHTML = (shown.length ? '' : `<div class="empty">'${esc(query)}' — ${H.none}</div>`) + shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${(it.n === 1 && H.bldg1) ? H.bldg1 : H.bldgs.replace('{0}', it.n)} · ${esc(it.tag)}</span></div><a class="go" href="${H.base}${it.code}/">${H.go}</a></div>`).join('');
   document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));
   for (const it of ITEMS) { const on = (group === H.all || it.group === group) && match(it); const m = markers[it.code]; if (on && !map.hasLayer(m)) m.addTo(map); if (!on && map.hasLayer(m)) map.removeLayer(m); }
 }
@@ -158,7 +166,8 @@ function tab(t) {
 document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.dataset.t)));
 document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
 const sEl = document.getElementById('search');
-sEl.addEventListener('input', () => { query = sEl.value.trim(); renderList(); });
+sEl.addEventListener('input', () => { query = sEl.value.trim(); render(); if (innerWidth > 760) fit(); });
+sEl.addEventListener('change', () => fit());
 sEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = ITEMS.find((i) => (group === H.all || i.group === group) && match(i)); if (first) select(first.code, true); } });
 function renderList() { render(); fit(); }
 if (location.hash === '#rank') tab('rank');

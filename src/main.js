@@ -2,11 +2,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { makeT } from './i18n.js';
+import { THEMES, GROUP_THEME } from './themes.js';
 
 const SCENE = JSON.parse(document.getElementById('scene-data').textContent);
 const CFG = JSON.parse(document.getElementById('config-data').textContent);
 const LANG = CFG.lang || 'ko';
-const T = makeT(LANG);
+const THEME_KEY = CFG.theme || GROUP_THEME[CFG.group] || 'office';
+const TH = (THEMES[LANG] || {})[THEME_KEY] || {};
+const T = makeT(LANG, TH);
 const NUM = (v, o) => Number(v).toLocaleString(LANG === 'zh' ? 'zh-CN' : LANG, o);
 const BENCH = location.hash.includes('bench'); // 렌더 없이 계산만 재는 모드
 const IS_MOBILE = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
@@ -1135,7 +1138,7 @@ const laser = { drawing: false, path: [], line: null, active: null };
 const beam = (() => {
   const g = new THREE.Group();
   const geo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true).translate(0, 0.5, 0);
-  [[1.3, '#ffffff', 1], [3.2, '#21d07a', 0.75], [7.5, '#21a366', 0.28]].forEach(([r, c, o]) => {
+  [[1.3, (TH.beam || [])[0] || '#ffffff', 1], [3.2, (TH.beam || [])[1] || '#21d07a', 0.75], [7.5, (TH.beam || [])[1] || '#21a366', 0.28]].forEach(([r, c, o]) => {
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     m.scale.set(r, 1, r); m.userData.o = o; g.add(m);
   });
@@ -1190,14 +1193,31 @@ function zap(P) {
   laserCarve(P.x, P.z, true);
 }
 
+// 업종별 운석 모양
+function meteorMesh() {
+  const hot = (c, m = 0.4) => new THREE.MeshStandardMaterial({ color: c, emissive: '#ff7a1a', emissiveIntensity: 0.55, metalness: m, roughness: 0.4 });
+  const g = new THREE.Group();
+  switch (TH.meteor) {
+    case 'pill': { const a = new THREE.Mesh(new THREE.CapsuleGeometry(5, 10, 6, 16), hot('#f8fafc', 0)); const b = new THREE.Mesh(new THREE.CylinderGeometry(5.05, 5.05, 5, 16), hot('#ef4444', 0)); b.position.y = 2.5; a.rotation.z = b.rotation.z = Math.PI / 3; g.add(a, b); break; }
+    case 'coin': { const c = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 2.4, 32), hot('#fbbf24', 1)); c.rotation.x = 1.1; g.add(c); break; }
+    case 'wafer': { const c = new THREE.Mesh(new THREE.CylinderGeometry(12, 12, 0.8, 48), hot('#cbd5e1', 1)); c.rotation.x = 1; g.add(c); break; }
+    case 'tv': { const box = new THREE.Mesh(new THREE.BoxGeometry(16, 10, 4), hot('#1f2937', 0.3)); const sc = new THREE.Mesh(new THREE.PlaneGeometry(14, 8.4), new THREE.MeshBasicMaterial({ color: '#93c5fd' })); sc.position.z = 2.05; g.add(box, sc); break; }
+    case 'phone': { const box = new THREE.Mesh(new THREE.BoxGeometry(6, 12, 1), hot('#111827', 0.5)); const sc = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 11), new THREE.MeshBasicMaterial({ color: '#a5b4fc' })); sc.position.z = 0.55; g.add(box, sc); g.scale.setScalar(1.4); break; }
+    case 'gear': { const c = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 3, 10), hot('#9ca3af', 1)); for (let i = 0; i < 10; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), hot('#9ca3af', 1)); t.position.set(Math.cos(i / 10 * Math.PI * 2) * 9, 0, Math.sin(i / 10 * Math.PI * 2) * 9); c.add(t); } c.rotation.x = 1.2; g.add(c); break; }
+    case 'gpu': { const box = new THREE.Mesh(new THREE.BoxGeometry(18, 4, 9), hot('#14532d', 0.6)); for (const x of [-5, 4]) { const f = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 0.5, 20), hot('#111827', 0.2)); f.position.set(x, -2.2, 0); box.add(f); } g.add(box); break; }
+    default: g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(8, 1), new THREE.MeshBasicMaterial({ color: '#ffb36b' })));
+  }
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  return g;
+}
 function meteor(P) {
   const fwd = camFwd(), tan = new THREE.Vector3(-fwd.z, 0, fwd.x);
   const S0 = P.clone().addScaledVector(fwd, -380).addScaledVector(tan, 160); S0.y += 650;
-  const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(8, 1), new THREE.MeshBasicMaterial({ color: '#ffb36b' }));
+  const rock = meteorMesh();
   world.add(rock); sfx.whoosh(1.5);
   const prev = S0.clone();
   fx.push({ t: 0, dur: 1.5, up(t) {
-    const e = t * t; rock.position.lerpVectors(S0, P, e); rock.rotation.x += 0.2;
+    const e = t * t; rock.position.lerpVectors(S0, P, e); rock.rotation.x += 0.12; rock.rotation.y += 0.07;
     for (let i = 0; i < 10; i++) {
       const q = prev.clone().lerp(rock.position, Math.random());
       fire.spawn(q.x, q.y, q.z, rnd(-3, 3), rnd(-3, 3), rnd(-3, 3), rnd(9, 16), 0.5, [1, 0.9, 0.6], [1, 0.3, 0.05]);
@@ -1205,7 +1225,7 @@ function meteor(P) {
     }
     prev.copy(rock.position);
   }, done() {
-    world.remove(rock); rock.geometry.dispose();
+    world.remove(rock); rock.traverse((o) => o.geometry && o.geometry.dispose());
     explode(P.x, P.y + 4, P.z, 34, 95, { big: 1.8 });
     crater(P.x, P.z, 42, 17);
     floatText(P.clone().setY(P.y + 30), pick1(LABELS.meteor), '#ffcf8a');
@@ -1693,11 +1713,12 @@ function warmup() {
     new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: '#30353b', metalness: 0.5, roughness: 0.4 })),
     new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: '#ffb36b' })),
     new THREE.Line(new THREE.BufferGeometry().setFromPoints([P, P]), new THREE.LineDashedMaterial({ color: '#21d07a', dashSize: 6, gapSize: 4, depthTest: false }))];
+  tmp.push(meteorMesh());
   tmp.forEach((m) => { m.position.copy(P); world.add(m); });
   beam.visible = true; debris.mesh.count = 1; rubbleL.mesh.count = Math.max(1, rubbleL.mesh.count); blocks.mesh.count = Math.max(1, blocks.mesh.count);
   renderer.compile(scene, camera);
   beam.visible = false; debris.mesh.count = 0;
-  tmp.forEach((m) => { world.remove(m); m.geometry.dispose(); });
+  tmp.forEach((m) => { world.remove(m); m.traverse((o) => o.geometry && o.geometry.dispose()); });
 }
 warmup();
 requestAnimationFrame(frame);

@@ -181,11 +181,13 @@ export const STR = {
     km: 'km', m: 'm',
   },
 };
-export function makeT(lang) {
+export function makeT(lang, theme = {}) {
   const D = STR[lang] || STR.ko;
+  const get = (src, key) => key.split('.').reduce((o, k) => (o == null ? o : o[k]), src);
   const T = (key, ...a) => {
-    let v = key.split('.').reduce((o, k) => (o == null ? o : o[k]), D);
-    if (v == null) v = key.split('.').reduce((o, k) => (o == null ? o : o[k]), STR.ko);
+    let v = get(theme, key);
+    if (v == null) v = get(D, key);
+    if (v == null) v = get(STR.ko, key);
     return typeof v === 'string' ? v.replace(/\{(\d)\}/g, (_, i) => a[+i] ?? '') : v;
   };
   return T;
