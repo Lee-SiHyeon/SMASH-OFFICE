@@ -1346,6 +1346,7 @@ function makeCard() {
     x.fillStyle = '#cfd6df'; x.font = '500 20px sans-serif'; x.fillText(`${CFG.place} · ${CFG.tagline}`, 56, 590);
     const url = c.toDataURL('image/png');
     $('cardImg').src = url; $('cardDl').href = url; $('cardModal').hidden = false;
+    $('submitRow').hidden = !RANK_ON || submitted; $('submitMsg').textContent = '';
   };
 }
 
@@ -1434,13 +1435,44 @@ addEventListener('keydown', (e) => {
   if (e.key === 'n' || e.key === 'N') setNight(!nightOn);
   if (e.key === 'l' || e.key === 'L') $('labelBtn').click();
   if (e.key === 'm' || e.key === 'M') toggleMute();
-  if (e.key === 'Escape') { $('cardModal').hidden = true; }
+  if (e.key === 'Escape') { $('cardModal').hidden = true; $('rankModal').hidden = true; }
 });
 function toggleMute() { sfx.muted = !sfx.muted; $('muteBtn').classList.toggle('on', sfx.muted); $('muteBtn').textContent = sfx.muted ? '소리 꺼짐' : '소리'; }
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
   if (typeof setDpr === 'function' && dpr > dprCap()) setDpr(dprCap());
 });
+
+// ───────────────────────── 랭킹 (Supabase RPC) ─────────────────────────
+const RANK_ON = !!(CFG.supabaseUrl && CFG.supabaseKey);
+async function rpc(fn, args) {
+  const r = await fetch(`${CFG.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: CFG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+const escH = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let submitted = false;
+async function loadBoard(highlight) {
+  const el = $('rankList');
+  if (!RANK_ON) { el.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요.</p>'; return; }
+  el.innerHTML = '<p class="muted">불러오는 중…</p>';
+  try {
+    const rows = await rpc('smash_top', { p_company: CFG.code, p_limit: 20 });
+    el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${Number(r.score).toLocaleString()}</span></li>`).join('')}</ol>` : '<p class="muted">아직 기록이 없어요. 첫 번째로 이름을 올리세요!</p>';
+  } catch (e) { el.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+}
+async function submitScore() {
+  if (!RANK_ON || submitted) return;
+  const nick = ($('nick').value || '').trim() || '익명 직장인';
+  try { localStorage.setItem('smash-nick', nick); } catch (e) {}
+  $('submitBtn').disabled = true; $('submitMsg').textContent = '등록 중…';
+  try {
+    const r = await rpc('smash_submit', { p_company: CFG.code, p_nick: nick, p_score: Math.round(score), p_collapsed: collapsedSite, p_rank: RANKS[maxRank][0] });
+    if (r.ok) { submitted = true; $('submitMsg').textContent = `${CFG.company} ${r.position}위로 등록했어요!`; loadBoard(nick.slice(0, 12)); }
+    else { $('submitMsg').textContent = r.reason === 'too_fast' ? '잠시 후 다시 등록해 주세요' : '등록하지 못했어요'; $('submitBtn').disabled = false; }
+  } catch (e) { $('submitMsg').textContent = '등록하지 못했어요'; $('submitBtn').disabled = false; }
+}
+function openRank() { $('rankModal').hidden = false; $('rankTitle').textContent = `${CFG.company} 랭킹`; loadBoard(); }
 
 // ───────────────────────── 동 이름표 ─────────────────────────
 let labelsOn = true;
@@ -1609,6 +1641,11 @@ $('muteBtn').onclick = toggleMute;
 $('resetBtn').onclick = () => location.reload();
 $('cardBtn').onclick = makeCard;
 $('cardClose').onclick = () => ($('cardModal').hidden = true);
+$('rankBtn').onclick = openRank;
+$('rankClose').onclick = () => ($('rankModal').hidden = true);
+$('submitBtn').onclick = submitScore;
+try { $('nick').value = localStorage.getItem('smash-nick') || ''; } catch (e) {}
+$('rankAll').href = (CFG.hub || '../') + '#rank';
 $('startBtn').onclick = () => {
   sfx.init(); $('start').classList.add('gone');
   setTimeout(() => toast('건물을 눌러 부수세요 · 숫자 1~6으로 도구 변경', 3500), 400);

@@ -11,6 +11,7 @@ for p in sorted((root / 'companies').glob('*.json')):
 ORDER = ['LG', '삼성', 'SK', '현대', 'IT', '병원']
 items.sort(key=lambda x: (ORDER.index(x['group']) if x['group'] in ORDER else 99, x['name']))
 data = json.dumps(items, ensure_ascii=False)
-page = (root / 'src' / 'hub.html').read_text().replace('/*ITEMS*/', data.replace('</', '<\\/'))
+site = (root / 'site.json').read_text()
+page = (root / 'src' / 'hub.html').read_text().replace('/*ITEMS*/', data.replace('</', '<\\/')).replace('/*SITE*/', site)
 (root / 'docs' / 'index.html').write_text(page)
 print('hub', len(items))

@@ -21,6 +21,7 @@ codes = sys.argv[1:] or sorted(p.stem for p in (root / 'companies').glob('*.json
 for code in codes:
     cfg = json.loads((root / f'companies/{code}.json').read_text())
     cfg.setdefault('antipode', '우루과이 앞바다(남대서양)'); cfg['hub'] = '../'
+    cfg.update(json.loads((root / 'site.json').read_text()))
     url = f'{BASE}{code}/'
     html = tpl.replace('LG사이언스파크', cfg['company']).replace('https://lee-sihyeon.github.io/SMASH-LGSP/og.png', f'{url}og.png') \
               .replace('https://lee-sihyeon.github.io/SMASH-LGSP/', url).replace('마곡 LG', f"{cfg['place']} ") \

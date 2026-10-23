@@ -18,11 +18,12 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
 #app{display:grid;grid-template-columns:380px 1fr;height:100%}
-#side{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+#side{min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
 header{padding:20px 20px 14px}
 .series{color:var(--accent);font-weight:800;font-size:12px}
 h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 .sub{color:var(--muted);font-size:13px;line-height:1.5}
+#chips[hidden],#list[hidden]{display:none}
 #chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 12px}
 .chip{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .chip.on{background:var(--fg);color:#111;border-color:var(--fg)}
@@ -33,6 +34,14 @@ h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 .card .t{flex:1;min-width:0}
 .card b{display:block;font-size:15px}
 .card span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
+#rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
+.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
+.rrow{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer}.rrow:hover{background:rgba(255,255,255,.04)}
+.rrow .no{width:24px;text-align:right;font-weight:900;color:var(--muted)}.rrow .t{flex:1;min-width:0}.rrow b{display:block}.rrow span{color:var(--muted);font-size:12px}
+.rrow .sc{font-weight:900;font-variant-numeric:tabular-nums}.bar{height:4px;border-radius:2px;background:var(--accent);margin-top:4px}
+.people{padding:4px 0 10px 34px}.people li{font-size:13px;padding:3px 0;color:#d5dbe3;display:flex;gap:8px}.people li i{font-style:normal;color:var(--muted);width:18px}.people li em{margin-left:auto;font-style:normal;font-weight:800}
+.muted{color:var(--muted);font-size:13px;padding:10px 4px}
 .go{background:var(--accent);color:#fff;text-decoration:none;font-weight:800;font-size:13px;padding:8px 12px;border-radius:10px;white-space:nowrap}
 #map{height:100%;background:#cfd6dc}
 footer{padding:10px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.6}
@@ -46,7 +55,7 @@ footer a{color:#ffb38f}
 .pop p{margin:0 0 10px;color:#4a5566;font-size:12px}
 .pop .go{display:inline-block}
 @media (max-width:760px){
-  #app{grid-template-columns:1fr;grid-template-rows:46vh 1fr}
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:46vh minmax(0,1fr)}
   #map{order:-1}
   #side{border-right:0;border-top:1px solid var(--line)}
   header{padding:14px 16px 10px}h1{font-size:22px}
@@ -63,9 +72,11 @@ footer a{color:#ffb38f}
       <h1>어느 회사를 부술까?</h1>
       <div class="sub">지도에서 회사를 고르세요. 실제 건물 배치(OpenStreetMap)를 3D로 부숩니다. 사직서 폭탄부터 퇴사 핵폭탄까지.</div>
     </header>
+    <div id="tabs"><button class="tab on" data-t="list">회사 고르기</button><button class="tab" data-t="rank">랭킹</button></div>
     <div id="chips"></div>
     <div id="list"></div>
-    <footer>회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자, © CARTO<br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues">우리 회사도 넣어 줘 →</a></footer>
+    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today">오늘</button><button class="rt" data-p="total">전체</button></div><div id="rankBody"></div></div>
+    <footer>회사·병원과 관계없는 비공식 패러디 게임입니다. 지도 © OpenStreetMap 기여자<br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues">우리 회사도 넣어 줘 →</a></footer>
   </aside>
   <div id="map"></div>
 </div>
@@ -74,7 +85,7 @@ footer a{color:#ffb38f}
 const ITEMS = /*ITEMS*/;
 const COL = { LG: '#c4005a', '삼성': '#1f4fd8', SK: '#ea5b0c', '현대': '#0b2e5c', IT: '#13a36b', '병원': '#0e8f9a' };
 const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([36.9, 127.6], 7);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 18, subdomains: 'abcd', attribution: '© OpenStreetMap 기여자 © CARTO' }).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 기여자' }).addTo(map);
 const markers = {};
 let group = '전체';
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -93,7 +104,38 @@ function select(code, fly) {
 function render() {
   const groups = ['전체', ...new Set(ITEMS.map((i) => i.group))];
   document.getElementById('chips').innerHTML = groups.map((g) => `<button class="chip${g === group ? ' on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
-  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; render(); fit(); }));
+  document.querySelectorAll('.chip').forEach((b) => (b.onclick = () => { group = b.dataset.g; const SITE = /*SITE*/;
+const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
+async function rpc(fn, args) { const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+let period = 'today', rankCache = null;
+async function showRank() {
+  const body = document.getElementById('rankBody');
+  if (!RANK_ON) { body.innerHTML = '<p class="muted">랭킹 서버 준비 중이에요. 게임 안에서 점수를 등록하면 여기에 회사별로 쌓입니다.</p>'; return; }
+  body.innerHTML = '<p class="muted">불러오는 중…</p>';
+  try {
+    rankCache = rankCache || await rpc('smash_companies');
+    const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
+    const max = Math.max(1, rows[0].v);
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${r.plays.toLocaleString()}판 · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
+      const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
+      box.innerHTML = '<p class="muted">불러오는 중…</p>';
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
+      box.dataset.loaded = 1;
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${el.dataset.code}/">도전하기 →</a>` : '<p class="muted">아직 기록 없음</p>';
+    }));
+  } catch (e) { body.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+}
+function tab(t) {
+  document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  document.getElementById('list').hidden = t !== 'list'; document.getElementById('chips').hidden = t !== 'list';
+  document.getElementById('rank').hidden = t !== 'rank';
+  if (t === 'rank') showRank();
+}
+document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.dataset.t)));
+document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
+render(); fit();
+if (location.hash === '#rank') tab('rank'); }));
   const shown = ITEMS.filter((i) => group === '전체' || i.group === group);
   document.getElementById('list').innerHTML = shown.map((it) => `<div class="card" data-code="${it.code}"><span class="dot" style="background:${COL[it.group]}"></span><div class="t"><b>${esc(it.name)}</b><span>${esc(it.place)} · ${it.n}동 · ${esc(it.tag)}</span></div><a class="go" href="${it.code}/">부수기</a></div>`).join('');
   document.querySelectorAll('.card').forEach((c) => (c.onclick = (e) => { if (e.target.closest('a')) return; select(c.dataset.code, true); }));

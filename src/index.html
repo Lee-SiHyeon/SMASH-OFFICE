@@ -70,7 +70,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 #startBtn{font-size:19px;padding:14px 34px;border-radius:14px}
 .how{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.7}
 #cardModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.7);padding:16px}
-#cardModal[hidden]{display:none}
+#cardModal[hidden],#rankModal[hidden]{display:none}
+#rankModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.6);padding:16px}
+#rankModal .box{width:100%;max-width:420px;max-height:80vh;overflow:auto;padding:16px}
+.rhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}.rhead b{flex:1;font-size:18px}.rhead a{color:#ffb38f;font-size:12px;font-weight:700;text-decoration:none}
+#rankList ol{list-style:none;margin:0;padding:0}
+#rankList li{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line);font-size:14px}
+#rankList li.me{background:rgba(255,106,43,.15);border-radius:8px}
+#rankList .no{width:22px;color:var(--muted);font-weight:800;text-align:right}
+#rankList b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rankList .rk{font-size:11px;color:var(--muted)}
+#rankList .sc{font-weight:800;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted);font-size:13px}
+#nick{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:9px 11px;font:inherit;font-size:14px}
+#submitRow[hidden]{display:none}#submitMsg{flex:none!important;font-size:12px;color:#ffd2bf!important}
 #cardModal .box{max-width:760px;width:100%;padding:14px}
 #cardImg{width:100%;border-radius:10px;display:block}
 #cardModal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;align-items:center}
@@ -116,6 +129,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <button class="btn" id="qBtn" title="화질">화질</button>
   <button class="btn" id="nightBtn" title="밤 (N)">밤</button>
   <button class="btn" id="muteBtn" title="소리 (M)">소리</button>
+  <button class="btn" id="rankBtn">랭킹</button>
   <button class="btn" id="resetBtn">처음부터</button>
   <button class="btn primary" id="cardBtn">인증샷</button>
 </div>
@@ -125,7 +139,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div id="hover" hidden></div>
 <div id="toast"></div>
 <div id="flash"></div>
-<div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row"><span>저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png">저장</a><button class="btn" id="cardClose">닫기</button></div></div></div>
+<div id="cardModal" hidden><div class="box panel"><img id="cardImg" alt="결과 카드"><div class="row" id="submitRow"><input id="nick" maxlength="12" placeholder="랭킹에 올릴 이름 (12자)"><button class="btn primary" id="submitBtn">랭킹 등록</button><span id="submitMsg"></span></div><div class="row"><span>저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요</span><a class="btn" id="cardDl" download="smash-result.png">저장</a><button class="btn" id="cardClose">닫기</button></div></div></div>
+<div id="rankModal" hidden><div class="box panel"><div class="rhead"><b id="rankTitle">랭킹</b><a id="rankAll" href="../#rank">회사별 순위 →</a><button class="btn" id="rankClose">닫기</button></div><div id="rankList"></div></div></div>
 <div id="start"><div class="startbox">
   <div id="startSeries"></div><div id="startTitle"></div><div id="startTag"></div>
   <button class="btn primary" id="startBtn">출근하기</button>
