@@ -1587,14 +1587,16 @@ function makeCard() {
     x.drawImage(shot, (1200 - shot.width * s) / 2, (630 - shot.height * s) / 2, shot.width * s, shot.height * s);
     const g = x.createLinearGradient(0, 0, 760, 0); g.addColorStop(0, 'rgba(10,14,22,.88)'); g.addColorStop(1, 'rgba(10,14,22,0)');
     x.fillStyle = g; x.fillRect(0, 0, 1200, 630);
-    x.fillStyle = '#ff6a2b'; x.font = '700 22px sans-serif'; x.fillText(CFG.series, 56, 70);
+    x.fillStyle = '#ff6a2b'; x.font = '700 22px sans-serif'; x.fillText(MODE === 'free' ? CFG.series : `${CFG.series} · ${T(MODE === 't60' ? 'mode.t60' : 'mode.demo')}`, 56, 70);
     x.fillStyle = '#fff'; x.font = '900 54px sans-serif'; x.fillText(T('smash', CFG.company), 56, 132);
-    const CL = T('card'); const rows = [[CL[0], NUM(Math.round(score))], [CL[1], RANKS[maxRank][0]], [CL[2], hudEls.rate.textContent], [CL[3], hudEls.cnt.textContent], [CL[4], hudEls.depth.textContent]];
-    rows.forEach(([k, v], i) => { x.fillStyle = '#aab4c3'; x.font = '500 24px sans-serif'; x.fillText(k, 56, 210 + i * 70); x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(v, 260, 214 + i * 70); });
+    const CL = T('card'); const rows = [...(MODE === 'demolish' && gameOver ? [[T('mode.demo'), (finishMs / 1000).toFixed(1) + T('mode.sec')]] : MODE === 't60' ? [[T('mode.t60'), NUM(Math.round(score))]] : []), [CL[0], NUM(Math.round(score))], [CL[1], RANKS[maxRank][0]], [CL[2], hudEls.rate.textContent], [CL[3], hudEls.cnt.textContent], [CL[4], hudEls.depth.textContent]];
+    rows.slice(0, 6).forEach(([k, v], i) => { x.fillStyle = '#aab4c3'; x.font = '500 24px sans-serif'; x.fillText(k, 56, 190 + i * 62); x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(v, 300, 194 + i * 62); });
     x.fillStyle = '#cfd6df'; x.font = '500 20px sans-serif'; x.fillText(`${CFG.place} · ${CFG.tagline}`, 56, 590);
     const url = c.toDataURL('image/png');
     $('cardImg').src = url; $('cardDl').href = url; $('cardModal').hidden = false;
-    $('submitRow').hidden = !RANK_ON || submitted; $('submitMsg').textContent = '';
+    const ranked = MODE !== 'free' && gameOver;
+    $('submitRow').hidden = !RANK_ON || submitted || !ranked; $('submitMsg').textContent = MODE === 'free' ? T('mode.freeNoRank') : '';
+    $('againBtn').hidden = MODE === 'free';
   };
 }
 
@@ -1623,7 +1625,35 @@ function pickAt(cx, cy, groundOnly) {
   if (h && (!g || h.distance < g.distance)) return { point: h.point.clone(), distance: h.distance };
   return g;
 }
+// ───────────────────────── 게임 모드: t60 · demolish · free ─────────────────────────
+let MODE = 'free', modeStart = 0, gameOver = false, nukeUsed = false, finishMs = 0;
+const T60 = 60;
+function startMode(m) {
+  MODE = m; modeStart = simTime; gameOver = false; nukeUsed = false; submitted = false;
+  document.body.dataset.mode = m;
+  $('timer').hidden = m === 'free';
+  if (m === 'demolish') document.querySelector('.tool[data-id="nuke"]').classList.add('ban');
+}
+function modeTick() {
+  if (MODE === 'free' || gameOver) return;
+  const el = $('timer'), t = simTime - modeStart;
+  if (MODE === 't60') {
+    const left = Math.max(0, T60 - t); el.textContent = left.toFixed(1); el.classList.toggle('hurry', left < 10);
+    if (left <= 0) endRun(T('mode.timeUp'), T60 * 1000);
+  } else {
+    el.textContent = t.toFixed(1);
+    if (collapsedSite >= SITE_COUNT) endRun(T('mode.done', t.toFixed(1)), Math.round(t * 1000));
+  }
+}
+function endRun(msg, ms) {
+  gameOver = true; finishMs = ms; $('timer').classList.remove('hurry');
+  toast(msg, 3000); sfx.cheer();
+  setTimeout(makeCard, 1200);
+}
 function act(P) {
+  if (gameOver) return;
+  if (tool === 'nuke' && MODE === 'demolish') { toast(T('mode.nukeBan'), 1800); return; }
+  if (tool === 'nuke' && MODE === 't60') { if (nukeUsed) { toast(T('mode.nukeOnce'), 1800); return; } nukeUsed = true; }
   recordTool(tool);
   if (tool === 'bomb') dropBomb(P);
   else if (tool === 'bat') swingBat(P);
@@ -1703,13 +1733,15 @@ async function rpc(fn, args) {
 }
 const escH = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let submitted = false;
+let boardMode = 't60';
 async function loadBoard(highlight) {
   const el = $('rankList');
+  document.querySelectorAll('.bt').forEach((b) => b.classList.toggle('on', b.dataset.m === boardMode));
   if (!RANK_ON) { el.innerHTML = `<p class="muted">${T('rank.off')}</p>`; return; }
   el.innerHTML = `<p class="muted">${T('rank.loading')}</p>`;
   try {
-    const rows = await rpc('smash_top', { p_company: CFG.code, p_limit: 20 });
-    el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${NUM(r.score)}</span></li>`).join('')}</ol>` : `<p class="muted">${T('rank.empty')}</p>`;
+    const rows = await rpc('smash_top', { p_company: CFG.code, p_limit: 20, p_mode: boardMode });
+    el.innerHTML = rows.length ? `<ol>${rows.map((r, i) => `<li class="${r.nick === highlight ? 'me' : ''}"><span class="no">${i + 1}</span><b>${escH(r.nick)}</b><span class="rk">${escH(r.rank_name || '')}</span><span class="sc">${boardMode === 'demolish' ? (r.time_ms / 1000).toFixed(1) + T('mode.sec') : NUM(r.score)}</span></li>`).join('')}</ol>` : `<p class="muted">${T('rank.empty')}</p>`;
   } catch (e) { el.innerHTML = `<p class="muted">${T('rank.fail')}</p>`; }
 }
 async function submitScore() {
@@ -1718,12 +1750,12 @@ async function submitScore() {
   try { localStorage.setItem('smash-nick', nick); } catch (e) {}
   $('submitBtn').disabled = true; $('submitMsg').textContent = T('rank.sending');
   try {
-    const r = await rpc('smash_submit', { p_company: CFG.code, p_nick: nick, p_score: Math.round(score), p_collapsed: collapsedSite, p_rank: RANKS[maxRank][0] });
-    if (r.ok) { submitted = true; $('submitMsg').textContent = T('rank.done', CFG.company, r.position); loadBoard(nick.slice(0, 12)); }
+    const r = await rpc('smash_submit', { p_company: CFG.code, p_nick: nick, p_score: Math.round(score), p_collapsed: collapsedSite, p_rank: RANKS[maxRank][0], p_mode: MODE, p_time_ms: finishMs });
+    if (r.ok) { submitted = true; $('submitMsg').textContent = T('rank.done', CFG.company, r.position); boardMode = MODE; openRank(nick.slice(0, 12)); }
     else { $('submitMsg').textContent = r.reason === 'too_fast' ? T('rank.fast') : T('rank.err'); $('submitBtn').disabled = false; }
   } catch (e) { $('submitMsg').textContent = T('rank.err'); $('submitBtn').disabled = false; }
 }
-function openRank() { $('rankModal').hidden = false; $('rankTitle').textContent = T('rank.title', CFG.company); loadBoard(); }
+function openRank(hl) { $('rankModal').hidden = false; $('rankTitle').textContent = T('rank.title', CFG.company); loadBoard(typeof hl === 'string' ? hl : undefined); }
 
 // ───────────────────────── 동 이름표 ─────────────────────────
 let labelsOn = true;
@@ -1866,7 +1898,7 @@ function frame(now) {
   fire.mat.uniforms.uScale.value = ps; smoke.mat.uniforms.uScale.value = ps; confetti.mat.uniforms.uScale.value = ps;
   sky.position.copy(camera.position);
 
-  hudT += rdt; if (hudT > 0.1) { hudT = 0; hud(); }
+  hudT += rdt; if (hudT > 0.1) { hudT = 0; hud(); modeTick(); }
   updateLabels();
   const c1 = performance.now();
   if (!BENCH) renderer.render(scene, camera);
@@ -1898,19 +1930,22 @@ $('muteBtn').onclick = toggleMute;
 $('resetBtn').onclick = () => location.reload();
 $('cardBtn').onclick = makeCard;
 $('cardClose').onclick = () => ($('cardModal').hidden = true);
-$('rankBtn').onclick = openRank;
+$('rankBtn').onclick = () => openRank();
+document.querySelectorAll('.bt').forEach((b) => (b.onclick = () => { boardMode = b.dataset.m; loadBoard(); }));
+document.querySelectorAll('.bt').forEach((b, i) => (b.textContent = T('mode.boards')[i]));
 $('rankClose').onclick = () => ($('rankModal').hidden = true);
 $('submitBtn').onclick = submitScore;
 try { $('nick').value = localStorage.getItem('smash-nick') || ''; } catch (e) {}
 $('rankAll').href = (CFG.hub || '../') + '#rank';
 ['pointerdown', 'touchend', 'keydown'].forEach((ev) => addEventListener(ev, () => { if (!$('start').classList.contains('gone')) return; sfx.init(); }, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden && sfx.ctx && sfx.ctx.state !== 'running') sfx.ctx.resume(); });
-$('startBtn').onclick = () => {
-  sfx.init(); $('start').classList.add('gone');
-  setTimeout(() => toast(T('hint'), 3500), 400);
+for (const [id, m] of [['startBtn', 't60'], ['demoBtn', 'demolish'], ['freeBtn', 'free']]) $(id).onclick = () => {
+  sfx.init(); $('start').classList.add('gone'); startMode(m);
+  setTimeout(() => toast(m === 'free' ? T('hint') : (m === 't60' ? T('mode.t60d') : T('mode.demod')), 3500), 400);
 };
+$('againBtn').onclick = () => location.reload();
 window.__sfxState = () => sfx.ctx && sfx.ctx.state;
-window.__smash = { renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const h = L.pos[k * 3 + 1] - groundH(L.pos[k * 3], L.pos[k * 3 + 2]); if (h > mx) mx = h; if (h > 20) hi++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+window.__smash = { startMode, mode: () => ({ MODE, gameOver, finishMs }), renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const h = L.pos[k * 3 + 1] - groundH(L.pos[k * 3], L.pos[k * 3 + 2]); if (h > mx) mx = h; if (h > 20) hi++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
 function warmup() {
   const P = new THREE.Vector3(0, -500, 0);
   fireball(P.x, P.y, P.z, 1, 0.01); ring(P.x, P.y, P.z, 1, 0.01);

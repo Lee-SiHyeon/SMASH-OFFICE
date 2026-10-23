@@ -41,7 +41,7 @@ h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 #regions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.rg{font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.rg.on{color:#111;background:var(--fg);border-color:var(--fg)}
 #tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
 #rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
-.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
+.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}.rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.rm.on{color:#fff;background:var(--accent);border-color:var(--accent)}
 .rrow{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer}.rrow:hover{background:rgba(255,255,255,.04)}
 .rrow .no{width:24px;text-align:right;font-weight:900;color:var(--muted)}.rrow .t{flex:1;min-width:0}.rrow b{display:block}.rrow span{color:var(--muted);font-size:12px}
 .rrow .sc{font-weight:900;font-variant-numeric:tabular-nums}.bar{height:4px;border-radius:2px;background:var(--accent);margin-top:4px}
@@ -90,7 +90,7 @@ footer a{color:#ffb38f}
     <div id="searchWrap"><input id="search" type="search" data-h="searchPh" data-attr="placeholder" autocomplete="off"></div>
     <div id="chips"></div>
     <div id="list"></div>
-    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
+    <div id="rank" hidden><div class="rtabs"><button class="rm on" data-m="t60" data-h="mT60"></button><button class="rm" data-m="demolish" data-h="mDemo"></button><span style="flex:1"></span><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
     <footer><span data-h="foot"></span><br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues" data-h="request"></a></footer>
   </aside>
   <div id="map"></div>
@@ -98,7 +98,7 @@ footer a{color:#ffb38f}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const ITEMS = [{"code": "bytedance", "region": "cn", "group": "互联网", "name": "字节跳动大钟寺", "place": "北京海淀", "tag": "刷不完的需求，一键清空", "lat": 39.96487, "lon": 116.33579, "n": 2, "alias": "字节跳动 bytedance 抖音 今日头条 大钟寺 北京 海淀"}, {"code": "tencent", "region": "cn", "group": "互联网", "name": "腾讯滨海大厦", "place": "深圳南山", "tag": "已读不回：老板的消息", "lat": 22.52571, "lon": 113.93034, "n": 5, "alias": "腾讯 tencent 滨海大厦 深圳 南山 微信"}, {"code": "alibaba", "region": "cn", "group": "互联网", "name": "阿里巴巴西溪园区", "place": "杭州", "tag": "福报？不要了", "lat": 30.28178, "lon": 120.02125, "n": 50, "alias": "阿里巴巴 alibaba 阿里 西溪 杭州 淘宝"}, {"code": "huawei", "region": "cn", "group": "制造", "name": "华为坂田基地", "place": "深圳坂田", "tag": "床垫留给你们，我走了", "lat": 22.65111, "lon": 114.05629, "n": 74, "alias": "华为 huawei 坂田 深圳 基地"}, {"code": "foxconn", "region": "cn", "group": "制造", "name": "富士康龙华园区", "place": "深圳龙华", "tag": "流水线停了，我也停了", "lat": 22.66294, "lon": 114.04235, "n": 162, "alias": "富士康 foxconn 鸿海 龙华 深圳"}, {"code": "byd", "region": "cn", "group": "制造", "name": "比亚迪总部", "place": "深圳坪山", "tag": "电量耗尽，下班充电", "lat": 22.68219, "lon": 114.3637, "n": 82, "alias": "比亚迪 byd 坪山 深圳 总部 汽车"}, {"code": "geely-hq", "region": "cn", "group": "汽车", "name": "吉利总部", "place": "杭州滨江", "tag": "年年降本，今年再降三个点", "lat": 30.21074, "lon": 120.21408, "n": 5, "alias": "吉利 geely 吉利控股 总部 杭州 滨江 汽车"}, {"code": "nio-hefei", "region": "cn", "group": "汽车", "name": "蔚来合肥新桥工厂", "place": "合肥新桥", "tag": "明天就要，8D报告今晚交", "lat": 31.99968, "lon": 116.98671, "n": 16, "alias": "蔚来 nio 合肥 新桥 工厂 先进制造 汽车"}];
-const H = {"title": "拆公司 — 在地图上选一家公司拆掉", "desc": "打工人拆公司：按真实建筑布局3D开拆，从辞职信炸弹到离职核弹。", "series": "打工人拆公司", "h1": "今天拆哪家?", "sub": "在地图上选择公司，按真实建筑布局(OpenStreetMap)3D开拆。从辞职信炸弹到离职核弹。", "tabList": "选择公司", "tabRank": "排行榜", "today": "今日", "total": "总计", "searchPh": "搜索公司或城市(例: 腾讯、深圳)", "foot": "与任何公司无关的非官方恶搞游戏。地图 © OpenStreetMap contributors", "request": "把我们公司也加进来 →", "all": "全部", "bldgs": "{0}栋", "goLong": "去拆 →", "go": "拆", "none": "没有匹配的公司，可通过下方链接申请。", "rOff": "排行榜服务器准备中。", "loading": "加载中…", "plays": "{0}局", "challenge": "去挑战 →", "noRec": "暂无记录", "rFail": "无法加载排行榜。", "base": "../"};
+const H = {"mT60": "60秒得分", "mDemo": "拆除用时", "sec": "秒", "title": "拆公司 — 在地图上选一家公司拆掉", "desc": "打工人拆公司：按真实建筑布局3D开拆，从辞职信炸弹到离职核弹。", "series": "打工人拆公司", "h1": "今天拆哪家?", "sub": "在地图上选择公司，按真实建筑布局(OpenStreetMap)3D开拆。从辞职信炸弹到离职核弹。", "tabList": "选择公司", "tabRank": "排行榜", "today": "今日", "total": "总计", "searchPh": "搜索公司或城市(例: 腾讯、深圳)", "foot": "与任何公司无关的非官方恶搞游戏。地图 © OpenStreetMap contributors", "request": "把我们公司也加进来 →", "all": "全部", "bldgs": "{0}栋", "goLong": "去拆 →", "go": "拆", "none": "没有匹配的公司，可通过下方链接申请。", "rOff": "排行榜服务器准备中。", "loading": "加载中…", "plays": "{0}局", "challenge": "去挑战 →", "noRec": "暂无记录", "rFail": "无法加载排行榜。", "base": "../"};
 const REGION = 'cn';
 document.querySelectorAll('[data-h]').forEach((el) => { el[el.dataset.attr || 'innerHTML'] = H[el.dataset.h]; });
 document.getElementById('regions').innerHTML = [["kr", "🇰🇷 한국", "../"], ["us", "🇺🇸 USA", "../us/"], ["jp", "🇯🇵 日本", "../jp/"], ["cn", "🇨🇳 中国", "../cn/"], ["eu", "🇪🇺 Europe", "../eu/"], ["in", "🇮🇳 India", "../in/"], ["vn", "🇻🇳 Việt Nam", "../vn/"]].map(([r, label, href]) => `<a class="rg${r === REGION ? ' on' : ''}" href="${href}">${label}</a>`).join('');
@@ -138,22 +138,22 @@ const SITE = {"supabaseUrl": "https://eardnytyohdekpvkzmid.supabase.co", "supaba
 if (SITE.adClient && location.hostname.endsWith(SITE.adHost)) { const a = document.createElement('script'); a.async = true; a.crossOrigin = 'anonymous'; a.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}`; document.head.appendChild(a); }
 const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
 async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
-let period = 'today', rankCache = null;
+let period = 'today', rmode = 't60', rankCache = {};
 async function showRank() {
   const body = document.getElementById('rankBody');
   if (!RANK_ON) { body.innerHTML = `<p class="muted">${H.rOff}</p>`; return; }
   body.innerHTML = `<p class="muted">${H.loading}</p>`;
   try {
-    rankCache = rankCache || await rpc('smash_companies');
-    const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
+    const rc = rankCache[rmode] = rankCache[rmode] || await rpc('smash_companies', { p_mode: rmode });
+    const rows = ITEMS.map((it) => { const r = rc.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0, best_time: null }; return { it, v: rmode === 'demolish' ? (r.best_time ? 1e7 / r.best_time : 0) : Number(r[period]), bt: r.best_time, plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
     const max = Math.max(1, rows[0].v);
-    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${rmode === 'demolish' ? (r.bt ? (r.bt / 1000).toFixed(1) + H.sec : '—') : r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
     document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
       const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
       box.innerHTML = `<p class="muted">${H.loading}</p>`;
-      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10, p_mode: rmode }).catch(() => []);
       box.dataset.loaded = 1;
-      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${rmode === 'demolish' ? (p.time_ms / 1000).toFixed(1) + H.sec : Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
     }));
   } catch (e) { body.innerHTML = `<p class="muted">${H.rFail}</p>`; }
 }
@@ -164,6 +164,7 @@ function tab(t) {
   if (t === 'rank') showRank();
 }
 document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.dataset.t)));
+document.querySelectorAll('.rm').forEach((b) => (b.onclick = () => { rmode = b.dataset.m; document.querySelectorAll('.rm').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('.rt').forEach((x) => (x.style.display = rmode === 'demolish' ? 'none' : '')); showRank(); }));
 document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
 const sEl = document.getElementById('search');
 sEl.addEventListener('input', () => { query = sEl.value.trim(); render(); if (innerWidth > 760) fit(); });

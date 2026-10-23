@@ -1,6 +1,7 @@
 // 화면 문구 (ko · en · ja · zh). {0} {1} 자리에 값이 들어감
 export const STR = {
   ko: {
+    mode: { t60: '점심시간 60초', t60d: '60초 안에 최대한 부수기 · 랭킹전', demo: '완전 철거 타임어택', demod: '회사 건물을 전부 무너뜨리는 시간 · 핵폭탄 금지', free: '자유 모드', freed: '시간 제한 없이 마음껏 (랭킹 없음)', timeUp: '점심시간 끝!', done: '완전 철거! {0}초', nukeBan: '타임어택에서는 핵폭탄 금지', nukeOnce: '핵폭탄은 한 판에 한 번만', boards: ['60초 점수', '완전 철거 시간'], sec: '초', freeNoRank: '자유 모드 기록은 랭킹에 안 올라가요', again: '한 판 더' },
     q: ['낮음', '보통', '높음'],
     ranks: ['인턴', '사원', '대리', '과장', '차장', '부장', '상무', '퇴사각'],
     envelope: '사직서', board: ['담당', '팀장', '실장', '본부장'], reject: '반려',
@@ -37,6 +38,7 @@ export const STR = {
     km: 'km', m: 'm',
   },
   en: {
+    mode: { t60: 'Lunch Break 60s', t60d: 'Wreck as much as you can in 60 seconds · ranked', demo: 'Demolition Time Attack', demod: 'How fast can you flatten every building? · no nukes', free: 'Free Play', freed: 'No timer, no ranking', timeUp: 'Lunch is over!', done: 'Fully demolished! {0}s', nukeBan: 'No nukes in Time Attack', nukeOnce: 'One nuke per run', boards: ['60s score', 'Demolition time'], sec: 's', freeNoRank: 'Free Play is not ranked', again: 'Play again' },
     q: ['Low', 'Medium', 'High'],
     ranks: ['Intern', 'Associate', 'Senior', 'Manager', 'Sr. Manager', 'Director', 'VP', 'RAGE QUIT'],
     envelope: 'I QUIT', board: ['Staff', 'Lead', 'Mgr', 'Dir'], reject: 'REJECTED',
@@ -73,6 +75,7 @@ export const STR = {
     km: 'km', m: 'm',
   },
   ja: {
+    mode: { t60: '昼休み60秒', t60d: '60秒でどれだけ壊せるか · ランキング戦', demo: '完全解体タイムアタック', demod: '全棟を倒すまでのタイム · 核爆弾禁止', free: 'フリーモード', freed: '時間制限なし(ランキングなし)', timeUp: '昼休み終了!', done: '完全解体! {0}秒', nukeBan: 'タイムアタックでは核爆弾禁止', nukeOnce: '核爆弾は1回だけ', boards: ['60秒スコア', '完全解体タイム'], sec: '秒', freeNoRank: 'フリーモードはランキング対象外', again: 'もう一回' },
     q: ['低', '中', '高'],
     ranks: ['インターン', '平社員', '主任', '係長', '課長', '部長', '役員', '退職届'],
     envelope: '退職届', board: ['担当', '課長', '部長', '本部長'], reject: '却下',
@@ -109,6 +112,7 @@ export const STR = {
     km: 'km', m: 'm',
   },
   zh: {
+    mode: { t60: '午休60秒', t60d: '60秒内尽情拆 · 排位赛', demo: '完全拆除计时赛', demod: '拆光所有楼要多久 · 禁用核弹', free: '自由模式', freed: '不限时(不计排名)', timeUp: '午休结束!', done: '完全拆除! {0}秒', nukeBan: '计时赛禁用核弹', nukeOnce: '核弹每局只能用一次', boards: ['60秒得分', '拆除用时'], sec: '秒', freeNoRank: '自由模式不计排名', again: '再来一局' },
     q: ['低', '中', '高'],
     ranks: ['实习生', '职员', '主管', '经理', '高级经理', '总监', '副总裁', '裸辞'],
     envelope: '辞职信', board: ['经办', '组长', '经理', '总监'], reject: '驳回',
@@ -145,6 +149,7 @@ export const STR = {
     km: '公里', m: '米',
   },
   vi: {
+    mode: { t60: 'Nghỉ trưa 60 giây', t60d: 'Đập càng nhiều càng tốt trong 60 giây · xếp hạng', demo: 'Phá dỡ tính giờ', demod: 'San phẳng mọi tòa nhà nhanh nhất · cấm bom hạt nhân', free: 'Chơi tự do', freed: 'Không giới hạn, không xếp hạng', timeUp: 'Hết giờ nghỉ trưa!', done: 'Phá dỡ xong! {0}s', nukeBan: 'Cấm bom hạt nhân khi tính giờ', nukeOnce: 'Mỗi lượt chỉ 1 bom hạt nhân', boards: ['Điểm 60s', 'Thời gian phá dỡ'], sec: 's', freeNoRank: 'Chơi tự do không xếp hạng', again: 'Chơi lại' },
     q: ['Thấp', 'Vừa', 'Cao'],
     ranks: ['Thực tập', 'Nhân viên', 'Chuyên viên', 'Trưởng nhóm', 'Trưởng phòng', 'Giám đốc', 'Phó TGĐ', 'NGHỈ VIỆC'],
     envelope: 'ĐƠN NGHỈ', board: ['NV', 'TN', 'TP', 'GĐ'], reject: 'TỪ CHỐI',

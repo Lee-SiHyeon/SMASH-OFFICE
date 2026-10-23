@@ -41,7 +41,7 @@ h1{margin:4px 0 6px;font-size:28px;font-weight:900;letter-spacing:-.03em}
 #regions{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.rg{font-size:12px;font-weight:800;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}.rg.on{color:#111;background:var(--fg);border-color:var(--fg)}
 #tabs{display:flex;gap:4px;padding:0 20px 12px}.tab{flex:1;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px;font:inherit;font-weight:800;cursor:pointer}.tab.on{color:var(--fg);border-color:var(--accent);background:rgba(255,106,43,.12)}
 #rank{overflow:auto;padding:0 16px 16px;flex:1}#rank[hidden]{display:none}
-.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}
+.rtabs{display:flex;gap:6px;margin-bottom:8px}.rt{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.rt.on{color:#111;background:var(--fg)}.rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.rm.on{color:#fff;background:var(--accent);border-color:var(--accent)}
 .rrow{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer}.rrow:hover{background:rgba(255,255,255,.04)}
 .rrow .no{width:24px;text-align:right;font-weight:900;color:var(--muted)}.rrow .t{flex:1;min-width:0}.rrow b{display:block}.rrow span{color:var(--muted);font-size:12px}
 .rrow .sc{font-weight:900;font-variant-numeric:tabular-nums}.bar{height:4px;border-radius:2px;background:var(--accent);margin-top:4px}
@@ -90,7 +90,7 @@ footer a{color:#ffb38f}
     <div id="searchWrap"><input id="search" type="search" data-h="searchPh" data-attr="placeholder" autocomplete="off"></div>
     <div id="chips"></div>
     <div id="list"></div>
-    <div id="rank" hidden><div class="rtabs"><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
+    <div id="rank" hidden><div class="rtabs"><button class="rm on" data-m="t60" data-h="mT60"></button><button class="rm" data-m="demolish" data-h="mDemo"></button><span style="flex:1"></span><button class="rt on" data-p="today" data-h="today"></button><button class="rt" data-p="total" data-h="total"></button></div><div id="rankBody"></div></div>
     <footer><span data-h="foot"></span><br><a href="https://github.com/Lee-SiHyeon/SMASH-OFFICE/issues" data-h="request"></a></footer>
   </aside>
   <div id="map"></div>
@@ -138,22 +138,22 @@ const SITE = /*SITE*/;
 if (SITE.adClient && location.hostname.endsWith(SITE.adHost)) { const a = document.createElement('script'); a.async = true; a.crossOrigin = 'anonymous'; a.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}`; document.head.appendChild(a); }
 const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
 async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
-let period = 'today', rankCache = null;
+let period = 'today', rmode = 't60', rankCache = {};
 async function showRank() {
   const body = document.getElementById('rankBody');
   if (!RANK_ON) { body.innerHTML = `<p class="muted">${H.rOff}</p>`; return; }
   body.innerHTML = `<p class="muted">${H.loading}</p>`;
   try {
-    rankCache = rankCache || await rpc('smash_companies');
-    const rows = ITEMS.map((it) => { const r = rankCache.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0 }; return { it, v: Number(r[period]), plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
+    const rc = rankCache[rmode] = rankCache[rmode] || await rpc('smash_companies', { p_mode: rmode });
+    const rows = ITEMS.map((it) => { const r = rc.find((x) => x.company === it.code) || { today: 0, total: 0, plays: 0, best_time: null }; return { it, v: rmode === 'demolish' ? (r.best_time ? 1e7 / r.best_time : 0) : Number(r[period]), bt: r.best_time, plays: Number(r.plays) }; }).sort((a, b) => b.v - a.v);
     const max = Math.max(1, rows[0].v);
-    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
+    body.innerHTML = rows.map((r, i) => `<div class="rrow" data-code="${r.it.code}"><span class="no">${i + 1}</span><div class="t"><b>${esc(r.it.name)}</b><span>${H.plays.replace('{0}', r.plays.toLocaleString())} · ${esc(r.it.place)}</span><div class="bar" style="width:${(r.v / max * 100).toFixed(1)}%;background:${COL[r.it.group]}"></div></div><span class="sc">${rmode === 'demolish' ? (r.bt ? (r.bt / 1000).toFixed(1) + H.sec : '—') : r.v.toLocaleString()}</span></div><div class="people" id="p-${r.it.code}" hidden></div>`).join('');
     document.querySelectorAll('.rrow').forEach((el) => (el.onclick = async () => {
       const box = document.getElementById('p-' + el.dataset.code); box.hidden = !box.hidden; if (box.hidden || box.dataset.loaded) return;
       box.innerHTML = `<p class="muted">${H.loading}</p>`;
-      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10 }).catch(() => []);
+      const top = await rpc('smash_top', { p_company: el.dataset.code, p_limit: 10, p_mode: rmode }).catch(() => []);
       box.dataset.loaded = 1;
-      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
+      box.innerHTML = top.length ? `<ol style="list-style:none;margin:0;padding:0">${top.map((p, k) => `<li><i>${k + 1}</i>${esc(p.nick)} <span style="color:#9aa6b6;font-size:11px">${esc(p.rank_name || '')}</span><em>${rmode === 'demolish' ? (p.time_ms / 1000).toFixed(1) + H.sec : Number(p.score).toLocaleString()}</em></li>`).join('')}</ol><a class="go" style="display:inline-block;margin-top:6px" href="${H.base}${el.dataset.code}/">${H.challenge}</a>` : `<p class="muted">${H.noRec}</p>`;
     }));
   } catch (e) { body.innerHTML = `<p class="muted">${H.rFail}</p>`; }
 }
@@ -164,6 +164,7 @@ function tab(t) {
   if (t === 'rank') showRank();
 }
 document.querySelectorAll('.tab').forEach((b) => (b.onclick = () => tab(b.dataset.t)));
+document.querySelectorAll('.rm').forEach((b) => (b.onclick = () => { rmode = b.dataset.m; document.querySelectorAll('.rm').forEach((x) => x.classList.toggle('on', x === b)); document.querySelectorAll('.rt').forEach((x) => (x.style.display = rmode === 'demolish' ? 'none' : '')); showRank(); }));
 document.querySelectorAll('.rt').forEach((b) => (b.onclick = () => { period = b.dataset.p; document.querySelectorAll('.rt').forEach((x) => x.classList.toggle('on', x === b)); showRank(); }));
 const sEl = document.getElementById('search');
 sEl.addEventListener('input', () => { query = sEl.value.trim(); render(); if (innerWidth > 760) fit(); });
