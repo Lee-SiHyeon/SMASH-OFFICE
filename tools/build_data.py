@@ -106,7 +106,7 @@ for bid, t, r in cands:
     if abs(a) < 20: continue
     if a < 0: r = r[::-1]
     insite = any(inside((cx, cz), s) for s in site_rings) or ('way', str(bid)) in site_ids or ('relation', str((bid - 10**12) // 10)) in site_ids
-    h = num(t.get('height')); lv = num(t.get('building:levels'))
+    h = num(t.get('height')); lv = num(t.get('building:levels')); explicit = h is not None or lv is not None
     fh = 5.2 if insite else 3.4
     if t.get('building') in ('industrial', 'factory', 'warehouse'): fh = 7.0
     if h is None: h = (lv or (8 if insite else 5)) * fh
@@ -119,16 +119,16 @@ for bid, t, r in cands:
         continue
     seen_cent[k] = 1
     nm = t.get('name', '') or t.get('name:ko', ''); nm = cfg.get('rename', {}).get(nm, nm)
-    buildings.append({'id': bid, 'n': nm, 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a)})
+    buildings.append({'id': bid, 'n': nm, 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a), 'x': explicit})
 
 # 다른 건물 중심을 품은 외곽선(캠퍼스 윤곽) 제거
 cs = [cen(b['p']) for b in buildings]
 drop = set()
 for i, o in enumerate(buildings):
     inner = sum(buildings[j]['a'] for j, c in enumerate(cs) if i != j and buildings[j]['a'] < o['a'] and inside(c, o['p']))
-    if inner > o['a'] * 0.3: drop.add(i)  # 안에 든 건물이 면적 30% 넘게 차지하면 윤곽선으로 보고 뺌(애플 링 같은 안뜰 건물은 남김)
+    if inner > o['a'] * 0.3 and not (o['x'] and o['h'] > max([buildings[j]['h'] for j, c in enumerate(cs) if i != j and buildings[j]['a'] < o['a'] and inside(c, o['p'])] + [0])): drop.add(i)  # 높이가 적힌 고층 건물(저층부를 품은 타워)은 남김  # 안에 든 건물이 면적 30% 넘게 차지하면 윤곽선으로 보고 뺌(애플 링 같은 안뜰 건물은 남김)
 buildings = [b for i, b in enumerate(buildings) if i not in drop]
-for b in buildings: b.pop('a')
+for b in buildings: b.pop('a'); b.pop('x')
 
 MAXB = 1100
 if len(buildings) > MAXB:
