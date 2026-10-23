@@ -1,0 +1,17 @@
+{
+ "code": "ericsson",
+ "region": "eu",
+ "lang": "en",
+ "group": "Tech",
+ "company": "Ericsson HQ",
+ "place": "Kista, Sweden",
+ "site": [
+  [
+   "relation",
+   1148701
+  ]
+ ],
+ "tagline": "Five bars of signal, zero bars of energy",
+ "series": "Office Smash",
+ "alias": "ericsson kista stockholm torshamnsgatan 5g telecom"
+}

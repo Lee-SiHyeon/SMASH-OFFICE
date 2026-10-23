@@ -1,0 +1,17 @@
+{
+ "code": "lvmh",
+ "region": "eu",
+ "lang": "en",
+ "group": "Luxury",
+ "company": "LVMH HQ",
+ "place": "Paris, France",
+ "site": [
+  [
+   "relation",
+   1086140
+  ]
+ ],
+ "tagline": "Luxury brands, budget coffee",
+ "series": "Office Smash",
+ "alias": "lvmh louis vuitton moet hennessy paris avenue montaigne"
+}

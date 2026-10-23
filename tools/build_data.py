@@ -118,7 +118,8 @@ for bid, t, r in cands:
     if k in seen_cent:  # 같은 자리 중복(way와 relation 양쪽에 있는 경우)
         continue
     seen_cent[k] = 1
-    buildings.append({'id': bid, 'n': t.get('name', '') or t.get('name:ko', ''), 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a)})
+    nm = t.get('name', '') or t.get('name:ko', ''); nm = cfg.get('rename', {}).get(nm, nm)
+    buildings.append({'id': bid, 'n': nm, 'h': round(h, 1), 'lv': lv, 's': 1 if insite else 0, 'p': r, 'a': abs(a)})
 
 # 다른 건물 중심을 품은 외곽선(캠퍼스 윤곽) 제거
 cs = [cen(b['p']) for b in buildings]

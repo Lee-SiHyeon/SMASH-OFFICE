@@ -17,5 +17,9 @@
  ],
  "tagline": "Sorry, I can't help with that Monday",
  "series": "Office Smash",
- "alias": "openai chatgpt mission bay 1455 3rd street san francisco"
+ "alias": "openai chatgpt mission bay 1455 3rd street san francisco",
+ "rename": {
+  "Uber Headquarters Building 1": "OpenAI HQ 1",
+  "Uber Headquarters Building 2": "OpenAI HQ 2"
+ }
 }

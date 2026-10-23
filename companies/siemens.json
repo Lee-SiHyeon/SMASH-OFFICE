@@ -17,5 +17,11 @@
  ],
  "tagline": "Engineered for overtime",
  "series": "Office Smash",
- "alias": "siemens konzernzentrale munich münchen wittelsbacherplatz"
+ "alias": "siemens konzernzentrale munich münchen wittelsbacherplatz",
+ "override": {
+  "Siemens Konzernzentrale": [
+   26,
+   6
+  ]
+ }
 }

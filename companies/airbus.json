@@ -1,0 +1,17 @@
+{
+ "code": "airbus",
+ "region": "eu",
+ "lang": "en",
+ "group": "Aero",
+ "company": "Airbus HQ",
+ "place": "Toulouse, France",
+ "site": [
+  [
+   "relation",
+   3136876
+  ]
+ ],
+ "tagline": "Cleared for takeoff, stuck in a meeting",
+ "series": "Office Smash",
+ "alias": "airbus toulouse blagnac dewoitine a320 a350"
+}

@@ -1,0 +1,17 @@
+{
+ "code": "mercedes",
+ "region": "eu",
+ "lang": "en",
+ "group": "Auto",
+ "company": "Mercedes-Benz Plant",
+ "place": "Stuttgart, Germany",
+ "site": [
+  [
+   "relation",
+   5521340
+  ]
+ ],
+ "tagline": "The best or nothing. Today: nothing.",
+ "series": "Office Smash",
+ "alias": "mercedes benz daimler untertürkheim stuttgart werk plant"
+}

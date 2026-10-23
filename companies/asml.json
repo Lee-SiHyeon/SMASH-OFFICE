@@ -1,0 +1,17 @@
+{
+ "code": "asml",
+ "region": "eu",
+ "lang": "en",
+ "group": "Tech",
+ "company": "ASML HQ",
+ "place": "Veldhoven, Netherlands",
+ "site": [
+  [
+   "way",
+   770919809
+  ]
+ ],
+ "tagline": "Printing 2nm chips, still waiting on one PDF",
+ "series": "Office Smash",
+ "alias": "asml veldhoven euv lithography de run"
+}
