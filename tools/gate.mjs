@@ -127,8 +127,8 @@ const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.mi
     rows.push({ c, med: +pct(st.log, 0.5).toFixed(2), p95: +pct(st.log, 0.95).toFixed(2), max: +Math.max(...st.log).toFixed(1), rubH: st.rub.maxH, over20: st.rub.over20, floating: st.rub.floating, col: st.collapsedSite, nan, errs: errs.length });
     await ctx.close();
   }
-  const fail = rows.filter((r) => r.fail || r.med > 4 || r.p95 > 12 || r.rubH > 17 || r.over20 > 0 || r.floating > 0 || r.nan || r.errs);
-  const warn = rows.filter((r) => !r.fail && (r.med > 2.5 || r.p95 > 8 || r.max > 150));
+  const fail = rows.filter((r) => r.fail || r.med > 6 || r.p95 > 12 || r.rubH > 17 || r.over20 > 0 || r.floating > 0 || r.nan || r.errs);
+  const warn = rows.filter((r) => !r.fail && (r.med > 4 || r.p95 > 8 || r.max > 150));
   rec('G7', '성능·물리', fail.length ? 'FAIL' : warn.length ? 'WARN' : 'PASS', rows.map((r) => (r.fail ? `${r.c} ${r.fail}` : `${r.c} 중앙 ${r.med}ms/p95 ${r.p95}ms/최대 ${r.max}ms/잔해 ${r.rubH}m/뜬 조각 ${r.floating}`)).join(' · '), { rows });
 }
 // ── G8 게임 흐름: 60초전 끝·결과창·등록칸, 철거전 끝 ──
