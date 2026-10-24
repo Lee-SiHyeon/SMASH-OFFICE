@@ -7,7 +7,16 @@ import { confettiAtlas, boardCanvas, themeSfx } from './fx_theme.js';
 
 const SCENE = JSON.parse(document.getElementById('scene-data').textContent);
 const CFG = JSON.parse(document.getElementById('config-data').textContent);
-const LANG = CFG.lang || 'ko';
+const PORTAL = !!CFG.portal; // 게임 포털(CrazyGames 등) 빌드: 브라우저 언어, 외부 링크·로고 없음
+const LANG = PORTAL ? (() => { const l = (navigator.language || 'en').slice(0, 2).toLowerCase(); return ['ko', 'ja', 'zh', 'vi', 'en'].includes(l) ? l : 'en'; })() : (CFG.lang || 'ko');
+if (PORTAL && LANG !== (CFG.lang || 'ko') && CFG.en) Object.assign(CFG, CFG.en);
+// 포털에서 회사 언어와 화면 언어가 다르면: OSM 영어 이름 → 한글은 로마자 → 그 밖의 한자 등은 이름 숨김
+const ROMA = [['g', 'kk', 'n', 'd', 'tt', 'r', 'm', 'b', 'pp', 's', 'ss', '', 'j', 'jj', 'ch', 'k', 't', 'p', 'h'],
+  ['a', 'ae', 'ya', 'yae', 'eo', 'e', 'yeo', 'ye', 'o', 'wa', 'wae', 'oe', 'yo', 'u', 'wo', 'we', 'wi', 'yu', 'eu', 'ui', 'i'],
+  ['', 'k', 'k', 'k', 'n', 'n', 'n', 't', 'l', 'k', 'm', 'l', 'l', 'l', 'p', 'l', 'm', 'p', 'p', 't', 't', 'ng', 't', 't', 'k', 't', 'p', 't']];
+const romanize = (t) => t.replace(/[가-힣]+/g, (w) => { const r = [...w].map((ch) => { const c = ch.charCodeAt(0) - 0xac00; return ROMA[0][Math.floor(c / 588)] + ROMA[1][Math.floor((c % 588) / 28)] + ROMA[2][c % 28]; }).join(''); return r[0].toUpperCase() + r.slice(1); });
+const FOREIGN = PORTAL && LANG !== (CFG.lang || 'ko');
+const bName = (src) => { if (!FOREIGN || !src.n) return src.n; if (src.ne) return src.ne; if (/^[\x00-\u024f\s·・\-–—()&'.,0-9]+$/.test(src.n)) return src.n; if (/^[가-힣A-Za-z0-9\s·()\-&.]+$/.test(src.n)) return romanize(src.n); return ''; };
 const THEME_KEY = CFG.theme || GROUP_THEME[CFG.group] || 'office';
 const TH = (THEMES[LANG] || {})[THEME_KEY] || {};
 const T = makeT(LANG, TH);
@@ -719,7 +728,7 @@ SCENE.buildings.forEach((src, bi) => {
   geo.dispose();
   const xs = p.map((v) => v[0]), zs = p.map((v) => v[1]);
   buildings.push({
-    i: bi, id: src.id, name: src.n, site: !!src.s, h: src.h, poly: p, mesh, color: new THREE.Color(color), style,
+    i: bi, id: src.id, name: bName(src), site: !!src.s, h: src.h, poly: p, mesh, color: new THREE.Color(color), style,
     cs, sn, u0, w0, cell, nx, nz, ny, fh, cellsIn, vol: cellsIn.length * ny,
     bbox: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)],
     cx: xs.reduce((a, b) => a + b, 0) / xs.length, cz: zs.reduce((a, b) => a + b, 0) / zs.length,
@@ -1608,6 +1617,7 @@ function makeCard() {
     const ranked = MODE !== 'free' && gameOver;
     $('submitRow').hidden = !RANK_ON || submitted || !ranked; $('submitMsg').textContent = MODE === 'free' ? T('mode.freeNoRank') : '';
     $('againBtn').hidden = MODE === 'free';
+    if (PORTAL) nextBtn();
   };
 }
 
@@ -1743,7 +1753,7 @@ async function rpc(fn, args) {
   } finally { clearTimeout(tm); }
 }
 function logEv(kind, mode) {
-  if (!RANK_ON || navigator.webdriver || location.hash === '#bench') return;
+  if (PORTAL || !RANK_ON || navigator.webdriver || location.hash === '#bench') return;
   const cc = ((navigator.language || '').split('-')[1] || '').toUpperCase();
   rpc('smash_log', { p_kind: kind, p_company: CFG.code, p_mode: mode || null, p_lang: (navigator.language || '').slice(0, 2), p_mobile: matchMedia('(pointer:coarse)').matches, p_cc: cc || null }).catch(() => {});
 }
@@ -1952,6 +1962,7 @@ document.documentElement.lang = LANG;
 document.querySelectorAll('[data-t]').forEach((el) => { const v = T(el.dataset.t); if (typeof v === 'string') el[el.dataset.attr || 'innerHTML'] = v; });
 $('qBtn').onclick = () => setQuality((qLevel + 1) % QUALITY.length);
 $('hubBtn').href = CFG.hub || '../';
+if (PORTAL) $('hubBtn').onclick = (e) => { e.preventDefault(); openPicker(); };
 if (SOFTWARE_GL) setTimeout(() => toast(T('noGpu'), 6000), 1500);
 $('muteBtn').onclick = toggleMute;
 $('resetBtn').onclick = () => location.reload();
@@ -1964,6 +1975,7 @@ $('rankClose').onclick = () => ($('rankModal').hidden = true);
 $('submitBtn').onclick = submitScore;
 try { $('nick').value = localStorage.getItem('smash-nick') || ''; } catch (e) {}
 $('rankAll').href = (CFG.hub || '../') + '#rank';
+if (PORTAL) $('rankAll').hidden = true;
 ['pointerdown', 'touchend', 'keydown'].forEach((ev) => addEventListener(ev, () => { if (!$('start').classList.contains('gone')) return; sfx.init(); }, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden && sfx.ctx && sfx.ctx.state !== 'running') sfx.ctx.resume(); });
 for (const [id, m] of [['startBtn', 't60'], ['demoBtn', 'demolish'], ['freeBtn', 'free']]) $(id).onclick = () => {
@@ -1971,8 +1983,44 @@ for (const [id, m] of [['startBtn', 't60'], ['demoBtn', 'demolish'], ['freeBtn',
   setTimeout(() => toast(m === 'free' ? T('hint') : (m === 't60' ? T('mode.t60d') : T('mode.demod')), 3500), 400);
 };
 $('againBtn').onclick = () => location.reload();
+// 포털: 결과창에 '다음 회사' — 아직 안 해 본 회사로 바로 이어서(세션 길이)
+function nextBtn() {
+  if ($('nextBtn')) return;
+  const b = document.createElement('button'); b.className = 'btn primary'; b.id = 'nextBtn';
+  b.textContent = { ko: '다음 회사 →', ja: '次の会社 →', zh: '下一家公司 →', vi: 'Công ty tiếp →' }[LANG] || 'Next company →';
+  $('againBtn').after(b);
+  b.onclick = async () => {
+    let seen = []; try { seen = JSON.parse(localStorage.getItem('smash-seen') || '[]'); } catch (e) {}
+    let list = []; try { list = await (await fetch(new URL('../companies.json', location.href))).json(); } catch (e) { return openPicker(); }
+    const fresh = list.filter((c) => c.code !== CFG.code && !seen.includes(c.code));
+    const pool = fresh.length ? fresh : list.filter((c) => c.code !== CFG.code);
+    location.href = `../${pool[Math.floor(Math.random() * pool.length)].code}/index.html`;
+  };
+}
+if (PORTAL) try { const k = 'smash-seen', a = JSON.parse(localStorage.getItem(k) || '[]'); if (!a.includes(CFG.code)) localStorage.setItem(k, JSON.stringify([...a, CFG.code])); } catch (e) {}
 window.__sfxState = () => sfx.ctx && sfx.ctx.state;
-window.__smash = { audio: () => (sfx.ctx ? sfx.ctx.state : 'none'), startMode, mode: () => ({ MODE, gameOver, finishMs }), renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0, fl = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const x = L.pos[k * 3], z = L.pos[k * 3 + 2], half = (L.size[k * 3] + L.size[k * 3 + 1] + L.size[k * 3 + 2]) / 6, h = L.pos[k * 3 + 1] - half * 0.8 - groundH(x, z); /* 조각 바닥 높이 */ if (h > mx) mx = h; if (h > 20) hi++; if (L.pos[k * 3 + 1] - half * 0.8 > floorAt(x, z) + 3) fl++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi, floating: fl }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+window.__smash = { cam: (pos, tgt) => { camera.position.set(...pos); controls.target.set(...tgt); controls.update(); }, audio: () => (sfx.ctx ? sfx.ctx.state : 'none'), startMode, mode: () => ({ MODE, gameOver, finishMs }), renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0, fl = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const x = L.pos[k * 3], z = L.pos[k * 3 + 2], half = (L.size[k * 3] + L.size[k * 3 + 1] + L.size[k * 3 + 2]) / 6, h = L.pos[k * 3 + 1] - half * 0.8 - groundH(x, z); /* 조각 바닥 높이 */ if (h > mx) mx = h; if (h > 20) hi++; if (L.pos[k * 3 + 1] - half * 0.8 > floorAt(x, z) + 3) fl++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi, floating: fl }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+// 포털 빌드: 다른 회사 고르기 창(../companies.json)
+async function openPicker() {
+  let box = $('pickModal');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'pickModal';
+    box.innerHTML = `<div class="box panel"><div class="rhead"><b>${escH(T('btn.hub').replace(/\s*→\s*$/, ''))}</b><button class="btn" id="pickClose">${escH(T('btn.close'))}</button></div><input id="pickQ" autocomplete="off" placeholder="🔍"><div id="pickList"></div></div>`;
+    document.body.appendChild(box);
+    $('pickClose').onclick = () => (box.hidden = true);
+    box.onclick = (e) => { if (e.target === box) box.hidden = true; };
+    let list = [];
+    try { list = await (await fetch(new URL('../companies.json', location.href))).json(); } catch (e) {}
+    const nm = (c) => (LANG === c.lang ? c.n : c.en) || c.n;
+    const draw = () => {
+      const q = $('pickQ').value.trim().toLowerCase();
+      $('pickList').innerHTML = list.filter((c) => !q || (c.n + ' ' + c.en + ' ' + c.a).toLowerCase().includes(q))
+        .map((c) => `<a class="pk${c.code === CFG.code ? ' on' : ''}" href="../${c.code}/index.html"><span>${c.f}</span><b>${escH(nm(c))}</b><i>${escH(LANG === c.lang ? c.p : (c.pe || c.p))}</i></a>`).join('');
+    };
+    $('pickQ').oninput = draw; draw();
+  }
+  box.hidden = false;
+}
 function warmup() {
   const P = new THREE.Vector3(0, -500, 0);
   fireball(P.x, P.y, P.z, 1, 0.01); ring(P.x, P.y, P.z, 1, 0.01);

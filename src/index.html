@@ -87,6 +87,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .how{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.7}
 #cardModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.7);padding:16px}
 #cardModal[hidden],#rankModal[hidden]{display:none}
+#pickModal[hidden]{display:none}
+#pickModal{position:fixed;inset:0;z-index:31;display:grid;place-items:center;background:rgba(0,0,0,.6);padding:16px}
+#pickModal .box{width:100%;max-width:460px;height:min(80vh,640px);display:flex;flex-direction:column;gap:8px;padding:16px}
+#pickModal .rhead{display:flex;justify-content:space-between;align-items:center}
+#pickQ{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:#fff;font:inherit;user-select:text;-webkit-user-select:text}
+#pickList{overflow:auto;flex:1;display:flex;flex-direction:column;gap:4px}
+#pickList .pk{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;color:#fff;text-decoration:none;background:rgba(255,255,255,.05);min-height:44px}
+#pickList .pk:hover,#pickList .pk.on{background:rgba(255,106,43,.25)}
+#pickList .pk b{flex:1;font-weight:600}
+#pickList .pk i{font-style:normal;font-size:12px;color:#9aa6b6}
 #rankModal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.6);padding:16px}
 #rankModal .box{width:100%;max-width:420px;max-height:80vh;overflow:auto;padding:16px}
 .rhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}.rhead b{flex:1;font-size:18px}.rhead a{color:#ffb38f;font-size:12px;font-weight:700;text-decoration:none}
