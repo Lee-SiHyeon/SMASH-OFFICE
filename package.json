@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "gate": "node tools/gate.mjs",
+    "gate:quick": "node tools/gate.mjs --quick",
+    "hooks": "cp tools/pre-push.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +15,6 @@
     "esbuild": "^0.24.0",
     "playwright": "^1.49.0",
     "three": "^0.160.0"
-  }
+  },
+  "type": "module"
 }

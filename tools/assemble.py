@@ -27,6 +27,8 @@ for code in codes:
     cfg['hub'] = '../' if region == 'kr' else f'../{region}/'
     cfg.setdefault('antipode', {'ko': '우루과이 앞바다(남대서양)', 'en': 'the other side of the planet', 'ja': '地球の裏側', 'zh': '地球另一端', 'vi': 'bên kia Trái Đất'}[lang])
     cfg.update(json.loads((root / 'site.json').read_text()))
+    _lm = json.loads((root / 'logo_src' / 'index.json').read_text()) if (root / 'logo_src' / 'index.json').exists() else {}
+    if code in _lm: cfg['logo'] = f'../logo/{code}.png'; cfg['logoBg'] = _lm[code]
     url = f'{BASE}{code}/'
     html = tpl.replace('LG사이언스파크', cfg['company']).replace('https://lee-sihyeon.github.io/SMASH-LGSP/og.png', f'{url}og.png') \
               .replace('https://lee-sihyeon.github.io/SMASH-LGSP/', url).replace('마곡 LG', f"{cfg['place']} ") \

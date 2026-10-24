@@ -24,6 +24,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 #brand{padding:12px 14px}
 #series{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.02em}
 #title{font-size:21px;font-weight:900;margin-top:2px;letter-spacing:-.02em}
+#brow{display:flex;align-items:center;gap:10px;margin-top:4px}
+#logo{flex:none;height:42px;min-width:42px;max-width:104px;border-radius:10px;background:#fff;display:grid;place-items:center;padding:5px;box-sizing:border-box;box-shadow:0 1px 0 rgba(0,0,0,.25)}#logo[hidden]{display:none}
+#logo img{max-height:32px;max-width:94px;display:block}#logo b{font-size:20px;font-weight:900;color:#fff}
+#brow #title{margin-top:0;line-height:1.15;word-break:keep-all;overflow-wrap:anywhere}
 #dock{padding:6px;display:flex;flex-direction:column;gap:4px}
 .tool{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--fg);font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left}
 .tool:hover{background:rgba(255,255,255,.06)}
@@ -104,6 +108,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #left{left:0;right:0;top:auto;bottom:0;width:auto;gap:6px;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
   #brand{position:fixed;left:10px;top:10px;padding:8px 10px}
   #title{font-size:16px}#series{font-size:10px}
+  #brand{max-width:calc(100vw - 186px)}#logo{height:34px;min-width:34px;max-width:80px;padding:4px;border-radius:8px}#logo img{max-height:26px;max-width:72px}#logo b{font-size:16px}#brow{gap:8px}
   #dock{flex-direction:row;overflow-x:auto;gap:4px}
   .tool{flex-direction:column;gap:2px;padding:6px 4px;min-width:62px;font-size:11px;text-align:center}
   .tool kbd,.tool .nm{display:none}.tool .sh{display:block;white-space:nowrap}
@@ -126,7 +131,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <body>
 <canvas id="stage"></canvas>
 <div id="left">
-  <div id="brand" class="panel"><div id="series"></div><div id="title"></div><a id="hubBtn" href="../" data-t="btn.hub">다른 회사 고르기 →</a></div>
+  <div id="brand" class="panel"><div id="series"></div><div id="brow"><span id="logo" hidden></span><div id="title"></div></div><a id="hubBtn" href="../" data-t="btn.hub">다른 회사 고르기 →</a></div>
   <div id="dock" class="panel"></div>
   <div id="sliderWrap" class="panel" hidden><div class="row"><span id="sliderLabel"></span><span id="sliderVal"></span></div><input id="slider" type="range"></div>
   <div id="tip"></div>

@@ -189,7 +189,7 @@ function intactMat(hex) {
 const SITE_COLORS = ['#e8eef3', '#dfe7ee', '#edf1f4', '#d6e0e8'];
 const STYLE_TINT = [['#e8eef3', '#dfe7ee', '#edf1f4', '#d6e0e8'], ['#ffffff', '#f3efe8', '#e9edf0', '#f6f2ea'], ['#ffffff', '#f6f1e6', '#eef2f5', '#fbf7ee'], ['#ffffff', '#f0e6e0', '#e8ddd6'], ['#ffffff', '#e6eef5', '#f0f0e8', '#e3ecf2']];
 function facadeStyle(src) {
-  const k = src.k || '', h = src.id >> 4;
+  const k = src.k || '', h = Math.floor(Math.abs(src.id) / 16) % 104729; // id가 2^31을 넘으면(relation) >> 연산이 음수가 됨
   if (k === 'f') return 4; if (k === 'b') return 3; if (k === 'a') return 2; if (k === 'g') return 0; if (k === 'c') return 1;
   if (src.s) return THEME_KEY === 'hospital' || THEME_KEY === 'nk' ? 1 : (h % 4 === 0 ? 1 : 0);
   if (k === 'o') return h % 3 === 0 ? 1 : 0;
@@ -199,7 +199,7 @@ function facadeStyle(src) {
 function buildingColor(src, style) {
   const pal = STYLE_TINT[style];
   if (src.c) return '#' + new THREE.Color('#ffffff').lerp(new THREE.Color(src.c), 0.6).getHexString();
-  return pal[(src.id >> 3) % pal.length];
+  return pal[Math.floor(Math.abs(src.id) / 8) % pal.length];
 }
 const CITY_COLORS = ['#f0e9dc', '#e6e1d6', '#dcd8cf', '#d9dfe3', '#efe4d2', '#cfd4d8'];
 
@@ -471,7 +471,11 @@ function resettle(x, z, r) {
       _q.fromArray(L.quat, s * 4);
       debris.spawn(px, py, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q, L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], 0, 0, 0, 0.3, 0, L.sty[s]);
       L.remove(s);
-    } else pile.raise(px, pz, Math.max(L.size[s * 3], L.size[s * 3 + 2]) * 0.35, py + half * 0.6 - groundH(px, pz));
+    } else {
+      let y = py;
+      if (py - half * 0.8 > fl + 1.2) { y = fl + half * 0.8; L.pos[s * 3 + 1] = y; L.write(s); } // 날아다니는 조각이 꽉 차면 그 자리에 바로 내려놓음(공중에 뜬 채 남지 않게)
+      pile.raise(px, pz, Math.max(L.size[s * 3], L.size[s * 3 + 2]) * 0.35, y + half * 0.6 - groundH(px, pz));
+    }
   }
 }
 const rubble = {
@@ -484,14 +488,14 @@ const rubble = {
       const px = L.pos[s * 3], pz = L.pos[s * 3 + 2];
       const d = Math.hypot(px - x, pz - z);
       if (d > r) continue;
-      if (debris.n >= debris.cap - 50) break;
+      if (debris.n >= debris.cap - 50) continue; // 꽉 차면 남은 건 resettle이 바닥으로 내려놓음
       _q.fromArray(L.quat, s * 4);
       const dx = px - cx, dz = pz - cz, dl = Math.hypot(dx, dz) || 1, f = power * (1 - d / r);
       debris.spawn(px, L.pos[s * 3 + 1] + 0.3, pz, L.size[s * 3], L.size[s * 3 + 1], L.size[s * 3 + 2], _q,
         L.col[s * 3], L.col[s * 3 + 1], L.col[s * 3 + 2], dx / dl * f, f * 0.8 + rnd(0, 2), dz / dl * f, f * 0.05, 0, L.sty[s]);
       L.remove(s); n++;
     }
-    if (n) resettle(x, z, r + 6);
+    if (n || power === 0) resettle(x, z, r + 6);
     return n;
   },
 };
@@ -1591,8 +1595,15 @@ function makeCard() {
     x.fillStyle = '#fff'; x.font = '900 54px sans-serif'; x.fillText(T('smash', CFG.company), 56, 132);
     const CL = T('card'); const rows = [...(MODE === 'demolish' && gameOver ? [[T('mode.demo'), (finishMs / 1000).toFixed(1) + T('mode.sec')]] : MODE === 't60' ? [[T('mode.t60'), NUM(Math.round(score))]] : []), [CL[0], NUM(Math.round(score))], [CL[1], RANKS[maxRank][0]], [CL[2], hudEls.rate.textContent], [CL[3], hudEls.cnt.textContent], [CL[4], hudEls.depth.textContent]];
     rows.slice(0, 6).forEach(([k, v], i) => { x.fillStyle = '#aab4c3'; x.font = '500 24px sans-serif'; x.fillText(k, 56, 190 + i * 62); x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(v, 300, 194 + i * 62); });
+    const drawLogo = () => {  // 오른쪽 위 로고 칩
+      if (!(logoImg.complete && logoImg.naturalWidth)) return false;
+      const lh = 64, lw = Math.min(200, (logoImg.naturalWidth / logoImg.naturalHeight) * lh), cx = 1200 - 40 - lw - 28;
+      x.fillStyle = CFG.logoBg || '#fff'; x.beginPath(); x.roundRect ? x.roundRect(cx, 36, lw + 28, lh + 24, 16) : x.rect(cx, 36, lw + 28, lh + 24); x.fill();
+      x.drawImage(logoImg, cx + 14, 48, lw, lh); return true;
+    };
     x.fillStyle = '#cfd6df'; x.font = '500 20px sans-serif'; x.fillText(`${CFG.place} · ${CFG.tagline}`, 56, 590);
-    const url = c.toDataURL('image/png');
+    let url = c.toDataURL('image/png');  // 로고 없는 판을 먼저 만들어 두고
+    try { if (drawLogo()) url = c.toDataURL('image/png'); } catch (e) {}  // 로고 출처가 달라 캔버스가 오염되면 로고 없는 판을 씀
     $('cardImg').src = url; $('cardDl').href = url; $('cardModal').hidden = false;
     const ranked = MODE !== 'free' && gameOver;
     $('submitRow').hidden = !RANK_ON || submitted || !ranked; $('submitMsg').textContent = MODE === 'free' ? T('mode.freeNoRank') : '';
@@ -1918,6 +1929,16 @@ hud();
 document.title = `${T('smash', CFG.company)} | ${CFG.series}`;
 $('title').textContent = T('smash', CFG.company);
 $('series').textContent = CFG.series;
+const logoImg = new Image();
+{
+  const el = $('logo'); el.hidden = false;
+  const initials = () => { el.style.background = '#ff6a2b'; el.innerHTML = `<b>${String(CFG.sign || CFG.company).trim().slice(0, 1)}</b>`; };
+  if (CFG.logo) {
+    el.style.background = CFG.logoBg || '#fff';
+    logoImg.alt = CFG.company; logoImg.onerror = initials; logoImg.src = new URL(CFG.logo, document.baseURI).href;
+    el.appendChild(logoImg);
+  } else initials();
+}
 $('startTitle').textContent = T('smash', CFG.company);
 $('startSeries').textContent = CFG.series;
 $('startTag').textContent = CFG.tagline;
@@ -1951,7 +1972,7 @@ for (const [id, m] of [['startBtn', 't60'], ['demoBtn', 'demolish'], ['freeBtn',
 };
 $('againBtn').onclick = () => location.reload();
 window.__sfxState = () => sfx.ctx && sfx.ctx.state;
-window.__smash = { startMode, mode: () => ({ MODE, gameOver, finishMs }), renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const h = L.pos[k * 3 + 1] - groundH(L.pos[k * 3], L.pos[k * 3 + 2]); if (h > mx) mx = h; if (h > 20) hi++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
+window.__smash = { audio: () => (sfx.ctx ? sfx.ctx.state : 'none'), startMode, mode: () => ({ MODE, gameOver, finishMs }), renderNow: () => { renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); }, rubbleStats: () => { let mx = 0, hi = 0, fl = 0; const L = rubbleL; for (let k = 0; k < L.high; k++) { if (!L.alive[k]) continue; const x = L.pos[k * 3], z = L.pos[k * 3 + 2], half = (L.size[k * 3] + L.size[k * 3 + 1] + L.size[k * 3 + 2]) / 6, h = L.pos[k * 3 + 1] - half * 0.8 - groundH(x, z); /* 조각 바닥 높이 */ if (h > mx) mx = h; if (h > 20) hi++; if (L.pos[k * 3 + 1] - half * 0.8 > floorAt(x, z) + 3) fl++; } return { live: L.live, maxH: +mx.toFixed(1), over20: hi, floating: fl }; }, screenOf: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; }, dpr: () => dpr, perfLog, renderLog, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs.length }), simTime: () => simTime, actV: (t, p) => { const P = new THREE.Vector3(...p); if (t === 'quake') quakeM = 9; act(P); }, buildings, blocks, debris, rubbleL, act, pickAt, selectTool, setNight, state: () => ({ score, style, destroyedSite, collapsedSite, deepest, debris: debris.n, blocks: blocks.live, rubble: rubbleL.live, fx: fx.length }) };
 function warmup() {
   const P = new THREE.Vector3(0, -500, 0);
   fireball(P.x, P.y, P.z, 1, 0.01); ring(P.x, P.y, P.z, 1, 0.01);
