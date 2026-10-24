@@ -43,3 +43,7 @@ for rk, R in REG.items():
                .replace('/*TITLE*/', H['title']).replace('/*DESC*/', H['desc']).replace('/*PATH*/', R['path']).replace('/*OGIMG*/', R['og'] if (root / 'data' / f"{R['og']}.json").exists() else items[0]['code']))
     out = root / 'docs' / R['path'] / 'index.html'; out.parent.mkdir(parents=True, exist_ok=True); out.write_text(page)
     print(rk, len(items))
+
+names = {i['code']: i['name'] for i in all_items}
+st = (root / 'src' / 'stats.html').read_text().replace('/*SITE*/', site).replace('/*NAMES*/', json.dumps(names, ensure_ascii=False).replace('</', '<\\/'))
+(root / 'docs' / 'stats').mkdir(exist_ok=True); (root / 'docs' / 'stats' / 'index.html').write_text(st); print('stats', len(names))

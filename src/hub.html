@@ -138,6 +138,7 @@ const SITE = /*SITE*/;
 if (SITE.adClient && location.hostname.endsWith(SITE.adHost)) { const a = document.createElement('script'); a.async = true; a.crossOrigin = 'anonymous'; a.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${SITE.adClient}`; document.head.appendChild(a); }
 const RANK_ON = !!(SITE.supabaseUrl && SITE.supabaseKey);
 async function rpc(fn, args) { const c = new AbortController(); setTimeout(() => c.abort(), 9000); const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', signal: c.signal, headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+if (RANK_ON && !navigator.webdriver) setTimeout(() => rpc('smash_log', { p_kind: 'hub', p_company: null, p_lang: (navigator.language || '').slice(0, 2), p_mobile: matchMedia('(pointer:coarse)').matches, p_cc: ((navigator.language || '').split('-')[1] || '').toUpperCase() || null }).catch(() => {}), 1200);
 let period = 'today', rmode = 't60', rankCache = {};
 async function showRank() {
   const body = document.getElementById('rankBody');

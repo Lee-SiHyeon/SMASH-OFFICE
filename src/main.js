@@ -1630,7 +1630,7 @@ let MODE = 'free', modeStart = 0, gameOver = false, nukeUsed = false, finishMs =
 const T60 = 60;
 function startMode(m) {
   MODE = m; modeStart = simTime; gameOver = false; nukeUsed = false; submitted = false;
-  document.body.dataset.mode = m;
+  document.body.dataset.mode = m; logEv('play', m);
   $('timer').hidden = m === 'free';
   if (m === 'demolish') document.querySelector('.tool[data-id="nuke"]').classList.add('ban');
 }
@@ -1646,7 +1646,7 @@ function modeTick() {
   }
 }
 function endRun(msg, ms) {
-  gameOver = true; finishMs = ms; $('timer').classList.remove('hurry');
+  gameOver = true; finishMs = ms; logEv('finish', MODE); $('timer').classList.remove('hurry');
   toast(msg, 3000); sfx.cheer();
   setTimeout(makeCard, 1200);
 }
@@ -1731,6 +1731,12 @@ async function rpc(fn, args) {
     return r.json();
   } finally { clearTimeout(tm); }
 }
+function logEv(kind, mode) {
+  if (!RANK_ON || navigator.webdriver || location.hash === '#bench') return;
+  const cc = ((navigator.language || '').split('-')[1] || '').toUpperCase();
+  rpc('smash_log', { p_kind: kind, p_company: CFG.code, p_mode: mode || null, p_lang: (navigator.language || '').slice(0, 2), p_mobile: matchMedia('(pointer:coarse)').matches, p_cc: cc || null }).catch(() => {});
+}
+setTimeout(() => logEv('visit'), 1500);
 const escH = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let submitted = false;
 let boardMode = 't60';

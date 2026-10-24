@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>회사 부수기 통계</title>
+<style>
+:root{--bg:#f4f4f1;--card:#fcfcfb;--ink:#1d1d1b;--ink2:#55554f;--mute:#8a8a83;--line:#e3e2dd;--bar:#2a78d6;--bar2:#a9c8ee;--track:#ecebe7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111110;--card:#1a1a19;--ink:#f1f0ec;--ink2:#bdbcb5;--mute:#85847d;--line:#2c2c2a;--bar:#3987e5;--bar2:#2b4f7a;--track:#262624}}
+:root[data-theme="dark"]{--bg:#111110;--card:#1a1a19;--ink:#f1f0ec;--ink2:#bdbcb5;--mute:#85847d;--line:#2c2c2a;--bar:#3987e5;--bar2:#2b4f7a;--track:#262624}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+h1{font-size:20px;margin:0;flex:1;min-width:180px}
+h2{font-size:14px;margin:0 0 10px;color:var(--ink2);font-weight:600}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--ink2);padding:7px 12px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--bar);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.c12{grid-column:span 12}.c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}
+@media (max-width:820px){.c6,.c4,.c8{grid-column:span 12}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.tile span{color:var(--mute);font-size:12px}
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:minmax(90px,1.3fr) 3fr auto;gap:8px;align-items:center;font-size:13px}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tr{height:12px;background:var(--track);border-radius:4px;overflow:hidden}
+.row .tr i{display:block;height:100%;background:var(--bar);border-radius:0 4px 4px 0}
+.row .v{font-variant-numeric:tabular-nums;color:var(--ink2);min-width:64px;text-align:right}
+.muted{color:var(--mute)}
+.cols{display:flex;align-items:flex-end;gap:2px;height:150px;border-bottom:1px solid var(--line);position:relative}
+.cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;cursor:default;min-width:0}
+.cols .c i{display:block;background:var(--bar);border-radius:4px 4px 0 0;min-height:1px}
+.cols .c:hover i{filter:brightness(1.15)}
+.ax{display:flex;gap:2px;font-size:10px;color:var(--mute);margin-top:4px}
+.ax span{flex:1;text-align:center;overflow:hidden;white-space:nowrap}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 9px;border-radius:6px;font-size:12px;display:none;z-index:9;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:500}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.key{display:flex;gap:8px;margin:10px 0}
+.key input{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.key button{padding:8px 14px;border-radius:8px;border:0;background:var(--bar);color:#fff;font:inherit}
+a{color:var(--bar)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>회사 부수기 통계</h1>
+    <div class="seg" id="days"><button data-d="1">오늘</button><button data-d="7" class="on">7일</button><button data-d="30">30일</button><button data-d="365">1년</button></div>
+  </header>
+  <div id="lock" class="card c12" hidden>
+    <h2>관리자 키</h2>
+    <p class="muted">방문·국가 통계는 키가 있어야 보여요. 랭킹은 아래에 바로 보여요.</p>
+    <div class="key"><input id="keyIn" type="password" placeholder="키 입력"><button id="keyGo">열기</button></div>
+  </div>
+  <div id="traffic">
+    <div class="tiles" id="tiles"></div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card c8"><h2>날짜별 방문자 <span class="muted" style="font-weight:400">(한국 시간, 막대에 올리면 판 수)</span></h2><div class="cols" id="daily"></div><div class="ax" id="dailyAx"></div></div>
+      <div class="card c4"><h2>시간대별 활동 (한국 시간)</h2><div class="cols" id="hours" style="height:110px"></div><div class="ax" id="hoursAx"></div>
+        <h2 style="margin-top:16px">모드별 판 수</h2><div class="rows" id="modes"></div></div>
+      <div class="card c6"><h2>많이 찾은 회사 (판 수)</h2><div class="rows" id="comps"></div></div>
+      <div class="card c6"><h2>국가별 방문자</h2><div class="rows" id="ctry"></div>
+        <h2 style="margin-top:16px">브라우저 언어</h2><div class="rows" id="langs"></div></div>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="card c12">
+      <header style="margin:0 0 8px"><h2 style="flex:1;margin:0">전체 랭킹 (회사 상관없이)</h2>
+        <div class="seg" id="gm"><button data-m="t60" class="on">60초 점수</button><button data-m="demolish">완전 철거 시간</button></div></header>
+      <div id="global" style="overflow-x:auto"></div>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:14px">방문자 = 하루 단위 익명 식별(IP·브라우저 해시, 원본 IP 저장 안 함). 국가는 접속 IP 기준. 2026-10-24부터 집계. <a href="../">← 메인</a></p>
+</div>
+<div id="tip"></div>
+<script>
+const SITE = /*SITE*/;
+const NAMES = /*NAMES*/;
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const N = (v) => Number(v || 0).toLocaleString('ko-KR');
+async function rpc(fn, args) { const r = await fetch(`${SITE.supabaseUrl}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: SITE.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) }); if (!r.ok) throw new Error(r.status); return r.json(); }
+let key = ''; try { key = new URLSearchParams(location.hash.slice(1)).get('k') || localStorage.getItem('smash-admin') || ''; } catch (e) {}
+if (location.hash.includes('k=')) { try { localStorage.setItem('smash-admin', key); } catch (e) {} history.replaceState(null, '', location.pathname); }
+let days = 7, gmode = 't60';
+const cname = (c) => NAMES[c] || c;
+const flag = (cc) => (cc && cc.length === 2 && cc !== '??' ? String.fromCodePoint(...[...cc].map((ch) => 0x1f1a5 + ch.charCodeAt(0))) : '🏳️');
+let dn; try { dn = new Intl.DisplayNames(['ko'], { type: 'region' }); } catch (e) {}
+const cty = (cc) => (cc === '??' ? '알 수 없음' : (dn ? dn.of(cc) : cc));
+const LN = { ko: '한국어', en: '영어', ja: '일본어', zh: '중국어', vi: '베트남어', hi: '힌디어', de: '독일어', fr: '프랑스어', es: '스페인어' };
+const MN = { t60: '점심시간 60초', demolish: '완전 철거', free: '자유' };
+function bars(el, rows, label, val, tipf) {
+  const mx = Math.max(1, ...rows.map(val));
+  el.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-tip="${esc(tipf ? tipf(r) : '')}"><span class="nm">${label(r)}</span><span class="tr"><i style="width:${(100 * val(r)) / mx}%"></i></span><span class="v">${N(val(r))}</span></div>`).join('') : '<p class="muted">아직 기록 없음</p>';
+}
+function cols(el, ax, rows, lab, val, tipf, every) {
+  const mx = Math.max(1, ...rows.map(val));
+  el.innerHTML = rows.map((r) => `<div class="c" data-tip="${esc(tipf(r))}"><i style="height:${(100 * val(r)) / mx}%"></i></div>`).join('');
+  ax.innerHTML = rows.map((r, i) => `<span>${i % every === 0 ? lab(r) : ''}</span>`).join('');
+}
+function fillDays(daily) {
+  const m = Object.fromEntries(daily.map((d) => [d.d, d])); const out = [];
+  const now = new Date(Date.now() + 9 * 3600e3);
+  for (let i = days - 1; i >= 0; i--) { const t = new Date(now - i * 864e5); const k = `${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`; out.push(m[k] || { d: k, v: 0, p: 0, u: 0 }); }
+  return out;
+}
+async function loadTraffic() {
+  if (!key) { $('lock').hidden = false; $('traffic').hidden = true; return; }
+  let s; try { s = await rpc('smash_stats', { p_key: key, p_days: days }); } catch (e) { $('tiles').innerHTML = '<p class="muted">통계 서버에 연결하지 못했어요.</p>'; return; }
+  if (!s.ok) { $('lock').hidden = false; $('traffic').hidden = true; try { localStorage.removeItem('smash-admin'); } catch (e) {} key = ''; return; }
+  $('lock').hidden = true; $('traffic').hidden = false;
+  const t = s.tot;
+  $('tiles').innerHTML = [['방문자', t.users], ['메인 화면 열기', t.hub], ['게임 입장', t.visit], ['시작한 판', t.play], ['끝까지 한 판', t.finish], ['랭킹 등록', s.scores.n], ['모바일 비율', t.mobile == null ? '-' : t.mobile + '%']]
+    .map(([k, v]) => `<div class="tile"><b>${typeof v === 'number' ? N(v) : v}</b><span>${k}</span></div>`).join('');
+  const dl = fillDays(s.daily);
+  cols($('daily'), $('dailyAx'), dl, (r) => r.d.slice(3) === '01' || days <= 31 ? r.d : '', (r) => r.u, (r) => `${r.d} · 방문자 ${N(r.u)} · 판 ${N(r.p)}`, days <= 7 ? 1 : days <= 31 ? 5 : 30);
+  const hm = Object.fromEntries(s.hours.map((h) => [h.h, h.n])); const hs = [...Array(24)].map((_, h) => ({ h, n: hm[h] || 0 }));
+  cols($('hours'), $('hoursAx'), hs, (r) => r.h, (r) => r.n, (r) => `${r.h}시 · ${N(r.n)}건`, 6);
+  bars($('modes'), s.modes.sort((a, b) => b.p - a.p), (r) => MN[r.m] || r.m, (r) => r.p, (r) => `시작 ${N(r.p)} · 끝까지 ${N(r.f)}`);
+  bars($('comps'), s.companies.slice(0, 20), (r) => esc(cname(r.c)), (r) => r.p, (r) => `${cname(r.c)} · 판 ${N(r.p)} · 입장 ${N(r.v)} · 방문자 ${N(r.u)} · 완주 ${N(r.f)}`);
+  bars($('ctry'), s.countries.slice(0, 15), (r) => `${flag(r.cc)} ${esc(cty(r.cc))}`, (r) => r.u, (r) => `${cty(r.cc)} · 방문자 ${N(r.u)} · 판 ${N(r.p)}`);
+  bars($('langs'), s.langs.slice(0, 8), (r) => LN[r.l] || r.l, (r) => r.n);
+}
+async function loadGlobal() {
+  const el = $('global'); el.innerHTML = '<p class="muted">불러오는 중…</p>';
+  try {
+    const rows = await rpc('smash_global', { p_mode: gmode, p_limit: 50 });
+    el.innerHTML = rows.length ? `<table><tr><th>#</th><th>닉네임</th><th>회사</th><th>직급</th><th style="text-align:right">${gmode === 'demolish' ? '시간' : '점수'}</th><th style="text-align:right">날짜</th></tr>${rows.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.nick)}</b></td><td><a href="../${esc(r.company)}/">${esc(cname(r.company))}</a></td><td class="muted">${esc(r.rank_name)}</td><td class="n">${gmode === 'demolish' ? (r.time_ms / 1000).toFixed(1) + '초' : N(r.score)}</td><td class="n muted">${new Date(r.at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</td></tr>`).join('')}</table>` : '<p class="muted">아직 기록 없음</p>';
+  } catch (e) { el.innerHTML = '<p class="muted">랭킹을 불러오지 못했어요.</p>'; }
+}
+$('days').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; days = +b.dataset.d; $('days').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); loadTraffic(); };
+$('gm').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; gmode = b.dataset.m; $('gm').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); loadGlobal(); };
+$('keyGo').onclick = () => { key = $('keyIn').value.trim(); try { localStorage.setItem('smash-admin', key); } catch (e) {} loadTraffic(); };
+const tip = $('tip');
+document.addEventListener('pointermove', (e) => { const t = e.target.closest('[data-tip]'); if (!t || !t.dataset.tip) { tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block'; tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = e.clientY + 14 + 'px'; });
+loadTraffic(); loadGlobal();
+</script>
+</body>
+</html>
